@@ -457,7 +457,7 @@ def predict_probability(study_hours):
     return sigmoid(z)
 
 thresholds = [0.5, 0.8]
-study_hours_values = [2, 3, 3.3333333333, 4, 5, 6]
+study_hours_values = [2, 3, 10 / 3, 4, 5, 6]
 
 for hours in study_hours_values:
     probability = predict_probability(hours)
