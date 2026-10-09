@@ -83,15 +83,15 @@ Here, `study_hours` is the input feature and `result` is the target. This lesson
 
 Linear Regression predicts a continuous numerical value:
 
-$
+$$
 \hat{y}=b_0+b_1x
-$
+$$
 
 For example, a model might predict marks from study hours. If the equation is:
 
-$
+$$
 \widehat{\text{marks}}=30+8x
-$
+$$
 
 and $x=5$, then the prediction is $30+8(5)=70$ marks.
 
@@ -99,15 +99,15 @@ and $x=5$, then the prediction is $30+8(5)=70$ marks.
 
 Logistic Regression estimates the probability of a class. It first calculates a linear score:
 
-$
+$$
 z=b_0+b_1x
-$
+$$
 
 It then converts the score to a probability using the sigmoid function:
 
-$
+$$
 p=\frac{1}{1+e^{-z}}
-$
+$$
 
 For example, let $z=-4+1.2x$. At $x=5$, $z=2$ and the estimated probability is approximately $0.8808$ (88.08%).
 
@@ -161,9 +161,9 @@ The linear score $z=b_0+b_1x$ can be any real number, including negative values 
 
 ## 2. Formula
 
-$
+$$
 \sigma(z)=\frac{1}{1+e^{-z}}
-$
+$$
 
 Where:
 - $z$ is the model's linear score.
@@ -194,13 +194,13 @@ Important properties:
 
 For $z=2$:
 
-$
+$$
 \begin{aligned}
 \sigma(2)&=\frac{1}{1+e^{-2}}\\
 &\approx\frac{1}{1+0.1353}\\
 &\approx 0.8808
 \end{aligned}
-$
+$$
 
 So the estimated positive-class probability is about 88.08%. With a 0.5 threshold, the predicted class is 1.
 
@@ -240,15 +240,15 @@ For example, if $p=0.8$, the positive-class probability is 80% and the negative-
 
 Odds compare the probability of an event with the probability of it not occurring:
 
-$
+$$
 \text{Odds}=\frac{p}{1-p}
-$
+$$
 
 For $p=0.8$:
 
-$
+$$
 \text{Odds}=\frac{0.8}{1-0.8}=\frac{0.8}{0.2}=4
-$
+$$
 
 Odds are 4:1 in favour of the event. Probability and odds are related but are not the same quantity.
 
@@ -260,15 +260,15 @@ Odds are 4:1 in favour of the event. Probability and odds are related but are no
 
 Log-odds are the natural logarithm of odds:
 
-$
+$$
 \operatorname{logit}(p)=\ln\left(\frac{p}{1-p}\right)
-$
+$$
 
 For $p=0.8$, odds are 4, so:
 
-$
+$$
 \operatorname{logit}(0.8)=\ln(4)\approx1.3863
-$
+$$
 
 For probabilities strictly between 0 and 1, log-odds can take any real value.
 
@@ -285,22 +285,22 @@ At $p=0$ or $p=1$, log-odds are undefined as finite values.
 
 Binary Logistic Regression models the log-odds as a linear function of its input features:
 
-$
+$$
 \ln\left(\frac{p}{1-p}\right)=b_0+b_1x
-$
+$$
 
 With multiple features:
 
-$
+$$
 \ln\left(\frac{p}{1-p}\right)
 =b_0+b_1x_1+b_2x_2+\cdots+b_nx_n
-$
+$$
 
 Let the right-hand side be the linear score $z$. Solving for $p$ gives:
 
-$
+$$
 p=\frac{1}{1+e^{-z}}
-$
+$$
 
 This is the sigmoid function from Lesson 3. The coefficients are learned from training data in a fitted model.
 
