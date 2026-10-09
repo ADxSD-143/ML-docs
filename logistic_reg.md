@@ -113,11 +113,11 @@ It then converts the score to a probability using the sigmoid function:
 
 
 ```text
-p = (1) / (1 + e^( − z))
+p = 1 / (1 + e^(−z))
 ```
 
 
-For example, let z = − 4 + 1.2x. At x = 5, z = 2 and the estimated probability is approximately 0.8808 (88.08%).
+For example, let z = −4 + 1.2x. At x = 5, z = 2 and the estimated probability is approximately 0.8808 (88.08%).
 
 A classification threshold, often 0.5 by default, can convert the probability into a class label. The threshold is a decision rule, not part of the sigmoid formula itself.
 
@@ -171,7 +171,7 @@ The linear score z = b₀ + b₁x can be any real number, including negative val
 
 
 ```text
-σ(z) = (1) / (1 + e^( − z))
+σ(z) = 1 / (1 + e^(−z))
 ```
 
 
@@ -206,7 +206,7 @@ For z = 2:
 
 
 ```text
-σ(2) = (1) / (1 + e^( − 2)) → ≈ (1) / (1 + 0.1353) → ≈ 0.8808
+σ(2) = 1 / (1 + e^(−2)) ≈ 1 / (1 + 0.1353) ≈ 0.8808
 ```
 
 
@@ -250,7 +250,7 @@ Odds compare the probability of an event with the probability of it not occurrin
 
 
 ```text
-Odds = (p) / (1 − p)
+Odds = p / (1 − p)
 ```
 
 
@@ -258,15 +258,15 @@ For p = 0.8:
 
 
 ```text
-Odds = (0.8) / (1 − 0.8) = (0.8) / (0.2) = 4
+Odds = 0.8 / 0.2 = 4
 ```
 
 
 Odds are 4:1 in favour of the event. Probability and odds are related but are not the same quantity.
 
 - If p = 0.5, odds are 1:1.
-- If p<0.5, odds are less than 1.
-- If p>0.5, odds are greater than 1.
+- If p < 0.5, odds are less than 1.
+- If p > 0.5, odds are greater than 1.
 
 ## 3. Log-odds (logit)
 
@@ -274,7 +274,7 @@ Log-odds are the natural logarithm of odds:
 
 
 ```text
-logit(p) = ln((p) / (1 − p))
+logit(p) = ln(p / (1 − p))
 ```
 
 
@@ -303,7 +303,7 @@ Binary Logistic Regression models the log-odds as a linear function of its input
 
 
 ```text
-ln((p) / (1 − p)) = b₀ + b₁x
+ln(p / (1 − p)) = b₀ + b₁x
 ```
 
 
@@ -311,7 +311,7 @@ With multiple features:
 
 
 ```text
-ln((p) / (1 − p)) = b₀ + b₁x₁ + b₂x₂ + … + bₙxₙ
+ln(p / (1 − p)) = b₀ + b₁x₁ + b₂x₂ + … + bₙxₙ
 ```
 
 
@@ -319,7 +319,7 @@ Let the right-hand side be the linear score z. Solving for p gives:
 
 
 ```text
-p = (1) / (1 + e^( − z))
+p = 1 / (1 + e^(−z))
 ```
 
 
@@ -362,7 +362,7 @@ Logistic Regression first estimates the probability of the positive class:
 
 
 ```text
-p = (1) / (1 + e^( − z))
+p = 1 / (1 + e^(−z))
 ```
 
 
@@ -397,7 +397,7 @@ Solving for x (when b₁ ≠ 0):
 
 
 ```text
-x = − (b₀) / (b₁)
+x = −b₀ / b₁
 ```
 
 
@@ -417,7 +417,7 @@ Suppose the model's score is:
 
 
 ```text
-z = − 4 + 1.2x
+z = −4 + 1.2x
 ```
 
 
@@ -425,7 +425,7 @@ Here, x is study hours. At threshold 0.5, set z = 0:
 
 
 ```text
-− 4 + 1.2x = 0 → 1.2x = 4 → x = (4) / (1.2) ≈ 3.333
+−4 + 1.2x = 0 → 1.2x = 4 → x = 4 / 1.2 ≈ 3.333
 ```
 
 
@@ -443,7 +443,7 @@ For a general threshold t where 0<t<1, the boundary satisfies p = t. Inverting t
 
 
 ```text
-z = ln((t) / (1 − t))
+z = ln(t / (1 − t))
 ```
 
 
@@ -451,17 +451,17 @@ For z = b₀ + b₁x, the boundary is therefore:
 
 
 ```text
-x = (ln((t) / (1 − t)) − b₀) / (b₁)
+x = [ln(t / (1 − t)) − b₀] / b₁
 ```
 
 
-Using z = − 4 + 1.2x:
+Using z = −4 + 1.2x:
 
 **Threshold t = 0.5**
 
 
 ```text
-z = ln((0.5) / (0.5)) = ln(1) = 0
+z = ln(0.5 / 0.5) = ln(1) = 0
 ```
 
 
@@ -471,13 +471,13 @@ The boundary is x ≈ 3.333.
 
 
 ```text
-z = ln((0.8) / (0.2)) = ln(4) ≈ 1.3863
+z = ln(0.8 / 0.2) = ln(4) ≈ 1.3863
 ```
 
 
 
 ```text
-x = (1.3863 + 4) / (1.2) ≈ 4.489
+x = (1.3863 + 4) / 1.2 ≈ 4.489
 ```
 
 
@@ -562,7 +562,7 @@ For one labelled example, the binary log loss is:
 
 
 ```text
-L(y,p) = − [yln(p) + (1 − y)ln(1 − p)]
+L(y, p) = −[y × ln(p) + (1 − y) × ln(1 − p)]
 ```
 
 
@@ -576,7 +576,7 @@ Substitute y = 1:
 
 
 ```text
-L(1,p) = − [1ln(p) + 0ln(1 − p)] → = − ln(p)
+L(1, p) = −ln(p)
 ```
 
 
@@ -588,7 +588,7 @@ Substitute y = 0:
 
 
 ```text
-L(0,p) = − [0ln(p) + 1ln(1 − p)] → = − ln(1 − p)
+L(0, p) = −ln(1 − p)
 ```
 
 
@@ -602,7 +602,7 @@ If y = 1 and p = 0.9:
 
 
 ```text
-L = − ln(0.9) ≈ 0.1054
+L = −ln(0.9) ≈ 0.1054
 ```
 
 
@@ -612,7 +612,7 @@ If y = 1 and p = 0.1:
 
 
 ```text
-L = − ln(0.1) ≈ 2.3026
+L = −ln(0.1) ≈ 2.3026
 ```
 
 
@@ -624,7 +624,7 @@ If y = 0 and p = 0.2, the probability assigned to the true class is 1 − p = 0.
 
 
 ```text
-L = − ln(1 − 0.2) = − ln(0.8) ≈ 0.2231
+L = − ln(1 − 0.2) = −ln(0.8) ≈ 0.2231
 ```
 
 
@@ -636,7 +636,7 @@ For n examples, calculate the loss for each example and take the mean:
 
 
 ```text
-J = − (1) / (n)Σ(i = 1 to n) [yᵢln(pᵢ) + (1 − yᵢ)ln(1 − pᵢ)]
+J = −(1/n) Σ(i = 1…n) [yᵢ × ln(pᵢ) + (1 − yᵢ) × ln(1 − pᵢ)]
 ```
 
 
@@ -654,15 +654,15 @@ Suppose the true labels and predicted probabilities are:
 
 | Example | True label y | Predicted probability p | Loss |
 |---:|---:|---:|---:|
-| 1 | 1 | 0.9 | − ln(0.9) ≈ 0.1054 |
-| 2 | 0 | 0.2 | − ln(0.8) ≈ 0.2231 |
-| 3 | 1 | 0.7 | − ln(0.7) ≈ 0.3567 |
+| 1 | 1 | 0.9 | −ln(0.9) ≈ 0.1054 |
+| 2 | 0 | 0.2 | −ln(0.8) ≈ 0.2231 |
+| 3 | 1 | 0.7 | −ln(0.7) ≈ 0.3567 |
 
 The average loss is:
 
 
 ```text
-J = (0.1054 + 0.2231 + 0.3567) / (3) ≈ 0.2284
+J = (0.1054 + 0.2231 + 0.3567) / 3 ≈ 0.2284
 ```
 
 
@@ -680,7 +680,7 @@ For example, with true label y = 1, predicting p = 0.01 gives:
 
 
 ```text
-L = − ln(0.01) ≈ 4.6052
+L = −ln(0.01) ≈ 4.6052
 ```
 
 
@@ -694,7 +694,7 @@ For one binary observation, the Bernoulli probability of observing label y when 
 
 
 ```text
-P(y| p) = p^y(1 − p)^(1 − y)
+P(y | p) = p^y × (1 − p)^(1 − y)
 ```
 
 
@@ -702,7 +702,7 @@ Taking the natural logarithm gives:
 
 
 ```text
-ln P(y| p) = yln(p) + (1 − y)ln(1 − p)
+ln P(y | p) = y × ln(p) + (1 − y) × ln(1 − p)
 ```
 
 
@@ -710,7 +710,7 @@ Negating that log probability produces the binary log loss:
 
 
 ```text
-L(y,p) = − ln P(y| p)
+L(y, p) = −ln P(y | p)
 ```
 
 
