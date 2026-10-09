@@ -9,7 +9,7 @@
 3. [Sigmoid function](#lesson-3-sigmoid-function)
 4. [Probability, odds, and log-odds](#lesson-4-probability-odds-and-log-odds)
 5. [Decision boundary and classification thresholds](#lesson-5-decision-boundary-and-classification-thresholds)
-6. Cost function / Log Loss
+6. [Log Loss / Binary Cross-Entropy](#lesson-6-log-loss--binary-cross-entropy)
 7. Maximum Likelihood Estimation (MLE)
 8. Gradient Descent and coefficient learning
 9. Training Logistic Regression with scikit-learn
@@ -339,9 +339,9 @@ Logistic Regression models log-odds linearly and uses the sigmoid function to ob
 
 Logistic Regression first estimates the probability of the positive class:
 
-$
+$$
 p = \frac{1}{1+e^{-z}}
-$
+$$
 
 It then uses a **decision threshold** to convert that probability into a class label. A common default threshold is 0.5:
 
@@ -356,27 +356,27 @@ A decision boundary is the point, line, or surface where a model switches from p
 
 For a single-feature Logistic Regression model:
 
-$
+$$
 z=b_0+b_1x
-$
+$$
 
 At threshold $0.5$, the boundary occurs where $p=0.5$. Since the sigmoid function equals $0.5$ when $z=0$, the boundary equation is:
 
-$
+$$
 b_0+b_1x=0
-$
+$$
 
 Solving for $x$ (when $b_1 \neq 0$):
 
-$
+$$
 x=-\frac{b_0}{b_1}
-$
+$$
 
 For multiple features, the 0.5-threshold boundary is:
 
-$
+$$
 b_0+b_1x_1+b_2x_2+\cdots+b_nx_n=0
-$
+$$
 
 This is a hyperplane in the feature space. With one feature it is a point; with two features it is a line; with three features it is a plane. If nonlinear features are engineered, the boundary may look nonlinear when plotted against the original features.
 
@@ -384,19 +384,19 @@ This is a hyperplane in the feature space. With one feature it is a point; with 
 
 Suppose the model's score is:
 
-$
+$$
 z=-4+1.2x
-$
+$$
 
 Here, $x$ is study hours. At threshold $0.5$, set $z=0$:
 
-$
+$$
 \begin{aligned}
 -4+1.2x&=0 \\
 1.2x&=4 \\
 x&=\frac{4}{1.2}\approx3.333
 \end{aligned}
-$
+$$
 
 So the 0.5-threshold boundary is approximately 3.33 study hours for this illustrative model.
 
@@ -410,35 +410,35 @@ This is an illustration with manually chosen coefficients, not a real or validat
 
 For a general threshold $t$ where $0<t<1$, the boundary satisfies $p=t$. Inverting the sigmoid gives:
 
-$
+$$
 z=\ln\left(\frac{t}{1-t}\right)
-$
+$$
 
 For $z=b_0+b_1x$, the boundary is therefore:
 
-$
+$$
 x=\frac{\ln\left(\frac{t}{1-t}\right)-b_0}{b_1}
-$
+$$
 
 Using $z=-4+1.2x$:
 
 **Threshold $t=0.5$**
 
-$
+$$
 z=\ln\left(\frac{0.5}{0.5}\right)=\ln(1)=0
-$
+$$
 
 The boundary is $x\approx3.333$.
 
 **Threshold $t=0.8$**
 
-$
+$$
 z=\ln\left(\frac{0.8}{0.2}\right)=\ln(4)\approx1.3863
-$
+$$
 
-$
+$$
 x=\frac{1.3863+4}{1.2}\approx4.489
-$
+$$
 
 A higher threshold makes the model require a higher estimated probability before predicting class $1$. For this model, the boundary moves from about 3.33 to 4.49 study hours.
 
@@ -498,6 +498,240 @@ For example, a screening system may prioritize catching as many positive cases a
 
 **Next:** Lesson 6 — Log Loss (the Logistic Regression cost function).
 
+
+---
+
+# Lesson 6: Log Loss / Binary Cross-Entropy
+
+## 1. Why does Logistic Regression need a loss function?
+
+Logistic Regression estimates a probability, but we also need a way to measure how good that prediction is compared with the true label. A **loss function** assigns a numerical penalty to a prediction.
+
+For binary classification:
+- $y$ is the true label and is either $0$ or $1$.
+- $p$ is the model's predicted probability that the label is $1$.
+- The loss should be small when the model assigns high probability to the true class.
+- The loss should be large when the model assigns low probability to the true class, especially when it is confidently wrong.
+
+Log Loss is also called **Binary Cross-Entropy (BCE)** for the binary classification setting.
+
+## 2. The formula
+
+For one labelled example, the binary log loss is:
+
+$
+L(y,p)=-\left[y\ln(p)+(1-y)\ln(1-p)\right]
+$
+
+Here, $\ln$ is the natural logarithm.
+
+This single formula handles both possible labels.
+
+### Case A: the true label is $y=1$
+
+Substitute $y=1$:
+
+$
+\begin{aligned}
+L(1,p)&=-\left[1\ln(p)+0\ln(1-p)\right] \\
+&=-\ln(p)
+\end{aligned}
+$
+
+Only the predicted probability of class $1$ matters. If $p$ is close to $1$, the loss is small. If $p$ is close to $0$, the loss becomes large.
+
+### Case B: the true label is $y=0$
+
+Substitute $y=0$:
+
+$
+\begin{aligned}
+L(0,p)&=-\left[0\ln(p)+1\ln(1-p)\right] \\
+&=-\ln(1-p)
+\end{aligned}
+$
+
+Now the model is rewarded for assigning a high probability to class $0$, which is $1-p$.
+
+## 3. Numerical examples
+
+### True label is 1
+
+If $y=1$ and $p=0.9$:
+
+$
+L=-\ln(0.9)\approx0.1054
+$
+
+This is a low loss because the model assigned 90% probability to the correct class.
+
+If $y=1$ and $p=0.1$:
+
+$
+L=-\ln(0.1)\approx2.3026
+$
+
+This is much larger because the model assigned only 10% probability to the correct class.
+
+### True label is 0
+
+If $y=0$ and $p=0.2$, the probability assigned to the true class is $1-p=0.8$:
+
+$
+L=-\ln(1-0.2)=-\ln(0.8)\approx0.2231
+$
+
+The prediction is reasonably good, so the loss is relatively small.
+
+## 4. Average loss across a dataset
+
+For $n$ examples, calculate the loss for each example and take the mean:
+
+$
+J=-\frac{1}{n}\sum_{i=1}^{n}
+\left[y_i\ln(p_i)+(1-y_i)\ln(1-p_i)\right]
+$
+
+Where:
+- $n$ is the number of training examples.
+- $y_i$ is the true label for example $i$.
+- $p_i$ is the predicted probability of class $1$ for example $i$.
+- $J$ is the average Log Loss over the dataset.
+
+Training aims to find model parameters that minimize this objective, usually with an optimization algorithm. The precise training setup can include regularization, which we will study later.
+
+## 5. Calculate average Log Loss by hand
+
+Suppose the true labels and predicted probabilities are:
+
+| Example | True label $y$ | Predicted probability $p$ | Loss |
+|---:|---:|---:|---:|
+| 1 | 1 | 0.9 | $-\\ln(0.9)\\approx0.1054$ |
+| 2 | 0 | 0.2 | $-\\ln(0.8)\\approx0.2231$ |
+| 3 | 1 | 0.7 | $-\\ln(0.7)\\approx0.3567$ |
+
+The average loss is:
+
+$
+J=\\frac{0.1054+0.2231+0.3567}{3}
+\\approx0.2284
+$
+
+This number measures the average probability penalty for these predictions. **Lower Log Loss is better when evaluating comparable predictions on the same target data.** Always compare models on the same evaluation examples and avoid using the test set to tune the model.
+
+## 6. Why does Log Loss penalize confident mistakes?
+
+The logarithm explains the behaviour:
+
+- Correct and confident prediction: the probability assigned to the true class is near $1$, so its negative log is near $0$.
+- Uncertain prediction: the true class receives a middling probability, so the loss is positive.
+- Confidently wrong prediction: the true class receives a probability near $0$, so the negative log becomes very large.
+
+For example, with true label $y=1$, predicting $p=0.01$ gives:
+
+$
+L=-\\ln(0.01)\\approx4.6052
+$
+
+That is much worse than predicting $p=0.9$, which gives a loss of only about $0.1054$.
+
+Log Loss is a **proper scoring rule**: in expectation, it rewards reporting honest probabilities when the evaluated distribution matches the one being predicted. It does not mean every model's probabilities are automatically calibrated.
+
+## 7. Connection to likelihood
+
+For one binary observation, the Bernoulli probability of observing label $y$ when the model predicts probability $p$ is:
+
+$
+P(y\\mid p)=p^y(1-p)^{1-y}
+$
+
+Taking the natural logarithm gives:
+
+$
+\\ln P(y\\mid p)=y\\ln(p)+(1-y)\\ln(1-p)
+$
+
+Negating that log probability produces the binary log loss:
+
+$
+L(y,p)=-\\ln P(y\\mid p)
+$
+
+Across independent labelled examples, minimizing the sum of negative log probabilities is equivalent to maximizing the likelihood of the observed labels. This is the bridge to **Maximum Likelihood Estimation (MLE)**, which is the next major theory lesson.
+
+## 8. Python implementation from scratch
+
+This code computes each example's loss and the average. Probabilities are clipped to avoid evaluating the logarithm at exactly $0$ due to numerical rounding or invalid extreme predictions.
+
+\`\`\`python
+import math
+
+
+def binary_log_loss(y_true, probability, epsilon=1e-15):
+    if y_true not in (0, 1):
+        raise ValueError("y_true must be 0 or 1.")
+
+    if not 0 <= probability <= 1:
+        raise ValueError("probability must be between 0 and 1.")
+
+    # Avoid log(0) in numerical calculations.
+    p = min(max(probability, epsilon), 1 - epsilon)
+
+    return -(y_true * math.log(p)
+             + (1 - y_true) * math.log(1 - p))
+
+
+y_true = [1, 0, 1]
+predicted_probabilities = [0.9, 0.2, 0.7]
+
+losses = [
+    binary_log_loss(y, p)
+    for y, p in zip(y_true, predicted_probabilities)
+]
+
+average_loss = sum(losses) / len(losses)
+
+for index, loss in enumerate(losses, start=1):
+    print(f"Example {index}: loss = {loss:.4f}")
+
+print(f"Average Log Loss = {average_loss:.4f}")
+\`\`\`
+
+Expected output (rounded):
+
+\`\`\`text
+Example 1: loss = 0.1054
+Example 2: loss = 0.2231
+Example 3: loss = 0.3567
+Average Log Loss = 0.2284
+\`\`\`
+
+The clipping is for numerical safety. It should not be used to hide invalid model outputs or data problems.
+
+## 9. Why not simply use Mean Squared Error?
+
+Mean Squared Error can be calculated for probability predictions, but binary Log Loss is the standard objective for Logistic Regression because it follows directly from the Bernoulli likelihood.
+
+Log Loss:
+- Is aligned with maximum-likelihood estimation for binary labels.
+- Penalizes assigning very low probability to the actual class.
+- Uses the full probability prediction rather than only the final thresholded class.
+- Can distinguish models that make the same class predictions but assign different probabilities.
+
+Accuracy alone cannot tell these probability-quality differences apart. In practice, use several relevant evaluation metrics rather than relying on a single number.
+
+## Key takeaways
+
+- Binary Log Loss measures the penalty for predicted probabilities relative to true binary labels.
+- For $y=1$, loss is $-\\ln(p)$.
+- For $y=0$, loss is $-\\ln(1-p)$.
+- Dataset Log Loss is the mean of the individual losses.
+- Confidently wrong predictions receive a large penalty.
+- Minimizing Log Loss is equivalent to maximizing the likelihood of the observed labels in the unregularized binary model.
+- Numerical implementations need to handle probabilities at the extremes safely.
+
+**Next:** Lesson 7 — Maximum Likelihood Estimation (MLE) and why minimizing Log Loss learns Logistic Regression parameters.
+
 ---
 
 ## Progress tracker
@@ -507,7 +741,7 @@ For example, a screening system may prioritize catching as many positive cases a
 - [x] Lesson 3 — Sigmoid function
 - [x] Lesson 4 — Probability, odds, and log-odds
 - [x] Lesson 5 — Decision boundary and classification thresholds
-- [ ] Lesson 6 — Log Loss / cost function
+- [x] Lesson 6 — Log Loss / cost function
 - [ ] Lesson 7 — Maximum Likelihood Estimation
 - [ ] Lesson 8 — Gradient Descent and coefficient learning
 - [ ] Lesson 9 — scikit-learn implementation
