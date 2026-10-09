@@ -261,13 +261,13 @@ Odds are 4:1 in favour of the event. Probability and odds are related but are no
 Log-odds are the natural logarithm of odds:
 
 $$
-\operatorname{logit}(p)=\ln\left(\frac{p}{1-p}\right)
+\mathrm{logit}(p)=\ln\left(\frac{p}{1-p}\right)
 $$
 
 For $p=0.8$, odds are 4, so:
 
 $$
-\operatorname{logit}(0.8)=\ln(4)\approx1.3863
+\mathrm{logit}(0.8)=\ln(4)\approx1.3863
 $$
 
 For probabilities strictly between 0 and 1, log-odds can take any real value.
