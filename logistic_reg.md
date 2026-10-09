@@ -11,7 +11,7 @@
 5. [Decision boundary and classification thresholds](#lesson-5-decision-boundary-and-classification-thresholds)
 6. [Log Loss / Binary Cross-Entropy](#lesson-6-log-loss--binary-cross-entropy)
 7. [Maximum Likelihood Estimation (MLE)](#lesson-7-maximum-likelihood-estimation-mle)
-8. Gradient Descent and coefficient learning
+8. [Gradient Descent and coefficient learning](#lesson-8-gradient-descent-and-coefficient-learning)
 9. Training Logistic Regression with scikit-learn
 10. Evaluation: confusion matrix, precision, recall, F1, ROC-AUC
 11. Multiclass Logistic Regression
@@ -1021,6 +1021,290 @@ The next lesson will derive the gradient of the Log Loss objective and show how 
 **Next:** Lesson 8 — Gradient Descent and coefficient learning.
 
 
+---
+
+# Lesson 8: Gradient Descent and Coefficient Learning
+
+## 1. What is Gradient Descent?
+
+MLE tells us what objective to optimize: maximize log-likelihood, or equivalently minimize negative log-likelihood / Log Loss.
+
+Gradient Descent is one iterative optimization algorithm for finding coefficient values that reduce that objective.
+
+The main idea:
+
+1. Start with initial coefficients.
+2. Calculate predicted probabilities.
+3. Calculate the loss and its gradient.
+4. Update the coefficients in the direction that reduces the loss.
+5. Repeat until a stopping condition is reached.
+
+For Logistic Regression, the model for observation i is:
+
+zᵢ = b₀ + b₁xᵢ₁ + b₂xᵢ₂ + … + bₘxᵢₘ
+
+pᵢ = 1 / (1 + e^(−zᵢ))
+
+The average Binary Cross-Entropy objective is:
+
+J(b) = −(1/n) Σ(i = 1…n) [yᵢ × ln(pᵢ) + (1 − yᵢ) × ln(1 − pᵢ)]
+
+Gradient Descent tries to minimize J by updating b.
+
+## 2. The coefficient update rule
+
+For a coefficient bⱼ, Gradient Descent uses:
+
+bⱼ(new) = bⱼ(old) − α × (∂J / ∂bⱼ)
+
+Where:
+
+- bⱼ is a model coefficient.
+- α (alpha) is the learning rate, which controls the update size.
+- ∂J / ∂bⱼ is the gradient: the rate at which the loss changes with that coefficient.
+
+The minus sign matters. We move against the gradient because the gradient points in the direction of the steepest local increase in the objective.
+
+- If the gradient is positive, the update decreases that coefficient.
+- If the gradient is negative, the update increases that coefficient.
+- If the gradient is near zero, the local first-order change is small.
+
+A learning rate that is too small can make progress slow. A rate that is too large can overshoot, oscillate, or diverge.
+
+## 3. Deriving the Logistic Regression gradient
+
+Start with the loss for one observation:
+
+L = −[y × ln(p) + (1 − y) × ln(1 − p)]
+
+The probability p depends on the linear score z through the sigmoid function:
+
+p = 1 / (1 + e^(−z))
+
+Use the chain rule to find how loss changes with z:
+
+∂L / ∂z = (∂L / ∂p) × (∂p / ∂z)
+
+### Step A: Differentiate the loss with respect to p
+
+∂L / ∂p = −y/p + (1 − y)/(1 − p)
+
+### Step B: Differentiate the sigmoid
+
+The sigmoid derivative is:
+
+∂p / ∂z = p × (1 − p)
+
+### Step C: Apply the chain rule
+
+Multiply the two derivatives:
+
+∂L / ∂z = [−y/p + (1 − y)/(1 − p)] × p × (1 − p)
+
+Simplifying gives a very useful result:
+
+**∂L / ∂z = p − y**
+
+This compact result is the key to the standard Logistic Regression gradient.
+
+### Step D: Differentiate with respect to a coefficient
+
+The linear score is:
+
+zᵢ = b₀ + b₁xᵢ₁ + … + bⱼxᵢⱼ + … + bₘxᵢₘ
+
+The derivative of zᵢ with respect to bⱼ is xᵢⱼ. Applying the chain rule:
+
+∂Lᵢ / ∂bⱼ = (pᵢ − yᵢ) × xᵢⱼ
+
+Average this gradient across all n training examples:
+
+∂J / ∂bⱼ = (1/n) Σ(i = 1…n) [(pᵢ − yᵢ) × xᵢⱼ]
+
+For the intercept, each observation has an implicit feature value of 1, so:
+
+∂J / ∂b₀ = (1/n) Σ(i = 1…n) (pᵢ − yᵢ)
+
+For one input feature x, the formulas become:
+
+∂J / ∂b₀ = mean(p − y)
+
+∂J / ∂b₁ = mean((p − y) × x)
+
+These are the gradients used in the Python implementation below.
+
+## 4. One numerical gradient update by hand
+
+Consider one training observation:
+
+- Input x = 2
+- Actual label y = 1
+- Initial intercept b₀ = 0
+- Initial coefficient b₁ = 0
+- Learning rate α = 0.1
+
+### Step 1: Calculate the score and probability
+
+z = b₀ + b₁x = 0 + 0 × 2 = 0
+
+p = sigmoid(0) = 0.5
+
+### Step 2: Calculate the initial loss
+
+Because y = 1:
+
+L = −ln(p) = −ln(0.5) ≈ 0.6931
+
+### Step 3: Calculate the gradients
+
+For one example, the error term p − y is:
+
+p − y = 0.5 − 1 = −0.5
+
+Intercept gradient:
+
+∂L / ∂b₀ = p − y = −0.5
+
+Coefficient gradient:
+
+∂L / ∂b₁ = (p − y) × x = −0.5 × 2 = −1.0
+
+### Step 4: Update the parameters
+
+Update rule: new coefficient = old coefficient − learning rate × gradient.
+
+b₀(new) = 0 − 0.1 × (−0.5) = 0.05
+
+b₁(new) = 0 − 0.1 × (−1.0) = 0.10
+
+The gradients are negative, so both parameters increase.
+
+### Step 5: Check the new prediction
+
+New score:
+
+z(new) = 0.05 + 0.10 × 2 = 0.25
+
+New probability:
+
+p(new) = sigmoid(0.25) ≈ 0.5622
+
+Since the actual label is 1, the new loss is:
+
+L(new) = −ln(0.5622) ≈ 0.5759
+
+The loss decreased from about 0.6931 to 0.5759 after this update. This is one simple update on one example; training on a dataset averages gradients across all examples.
+
+## 5. Batch Gradient Descent
+
+In **batch Gradient Descent**, every update uses the full training dataset.
+
+For all examples at once, the gradient for coefficient bⱼ is:
+
+gradientⱼ = (1/n) Σ(i = 1…n) [(pᵢ − yᵢ) × xᵢⱼ]
+
+This differs from Stochastic Gradient Descent, which updates parameters using one example at a time, and mini-batch Gradient Descent, which uses a subset of examples. We will compare these optimization strategies later.
+
+A convenient matrix form, with a column of ones added for the intercept, is:
+
+gradient = Xᵀ × (p − y) / n
+
+Here X includes the intercept column, p is the vector of predicted probabilities, y is the vector of labels, and Xᵀ is the transpose of X.
+
+## 6. Python implementation from scratch
+
+This example trains a one-feature Logistic Regression model using NumPy and batch Gradient Descent. It does not use scikit-learn.
+
+The feature is standardized first to make optimization more stable. The learned coefficient therefore corresponds to standardized study hours, not the original hour scale.
+
+```python
+import numpy as np
+
+
+def sigmoid(z):
+    # Clipping protects exp() from extreme numerical inputs.
+    z = np.clip(z, -500, 500)
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+def binary_log_loss(y_true, probabilities, epsilon=1e-15):
+    p = np.clip(probabilities, epsilon, 1 - epsilon)
+    return -np.mean(
+        y_true * np.log(p)
+        + (1 - y_true) * np.log(1 - p)
+    )
+
+
+# Small illustrative binary classification dataset
+X_raw = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=float).reshape(-1, 1)
+y = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=float)
+
+# Standardize the feature
+X_mean = X_raw.mean(axis=0)
+X_std = X_raw.std(axis=0)
+X_scaled = (X_raw - X_mean) / X_std
+
+# Add a column of ones for the intercept
+X = np.c_[np.ones((len(X_scaled), 1)), X_scaled]
+
+# Start with intercept = 0 and coefficient = 0
+theta = np.zeros(X.shape[1], dtype=float)
+
+learning_rate = 0.1
+epochs = 2000
+
+initial_probabilities = sigmoid(X @ theta)
+initial_loss = binary_log_loss(y, initial_probabilities)
+
+for epoch in range(epochs):
+    # 1. Forward pass: compute scores and probabilities
+    probabilities = sigmoid(X @ theta)
+
+    # 2. Compute the average gradient for all parameters
+    gradient = (X.T @ (probabilities - y)) / len(y)
+
+    # 3. Update parameters in the negative-gradient direction
+    theta -= learning_rate * gradient
+
+final_probabilities = sigmoid(X @ theta)
+final_loss = binary_log_loss(y, final_probabilities)
+predicted_classes = (final_probabilities >= 0.5).astype(int)
+
+print("Initial Log Loss:", round(initial_loss, 4))
+print("Final Log Loss:", round(final_loss, 4))
+print("Learned intercept:", round(theta[0], 4))
+print("Coefficient for standardized study hours:", round(theta[1], 4))
+print("Predicted probabilities:", np.round(final_probabilities, 3))
+print("Predicted classes:", predicted_classes)
+```
+
+The initial loss should be about 0.6931, and the final loss should be lower after these updates. Exact final coefficients and probabilities depend on the number of iterations and learning rate.
+
+This small dataset is perfectly separable. In unregularized Logistic Regression, perfectly separable data can cause coefficient magnitudes to keep growing as the loss approaches zero rather than settling at a finite maximum-likelihood estimate. This example demonstrates the optimization mechanism, not a recommended production training setup.
+
+## 7. What to inspect when training does not work
+
+- **Loss is not decreasing:** the learning rate may be too high, the gradient implementation may be wrong, or the data may need preprocessing.
+- **Loss barely changes:** the learning rate may be too small, features may have very different scales, or gradients may be small.
+- **Probabilities are all near 0.5:** the model may not have learned enough yet, or its features may provide limited signal.
+- **Coefficients grow extremely large:** check for perfect or near-perfect separation; regularization can help.
+- **Training loss is low but test performance is poor:** check data leakage, overfitting, distribution shift, and the quality of the train/test split.
+
+Gradient Descent is an optimizer, not a guarantee of generalization. Always evaluate the trained model on held-out data.
+
+## Key takeaways
+
+- MLE defines the objective; Gradient Descent is one method to optimize it.
+- For binary Logistic Regression, the derivative of one-example Log Loss with respect to the score is p − y.
+- The gradient for coefficient bⱼ is the average of (pᵢ − yᵢ) × xᵢⱼ.
+- The intercept gradient is the average of pᵢ − yᵢ.
+- Parameters update by subtracting the learning rate times the gradient.
+- Feature scaling can help Gradient Descent converge more reliably.
+- Learning rate, stopping criteria, regularization, and validation all matter in a robust training workflow.
+
+**Next:** Lesson 9 — Training Logistic Regression with scikit-learn and comparing it with the from-scratch implementation.
+
+
 ## Progress tracker
 
 - [x] Lesson 1 — Classification fundamentals
@@ -1030,7 +1314,7 @@ The next lesson will derive the gradient of the Log Loss objective and show how 
 - [x] Lesson 5 — Decision boundary and classification thresholds
 - [x] Lesson 6 — Log Loss / cost function
 - [x] Lesson 7 — Maximum Likelihood Estimation
-- [ ] Lesson 8 — Gradient Descent and coefficient learning
+- [x] Lesson 8 — Gradient Descent and coefficient learning
 - [ ] Lesson 9 — scikit-learn implementation
 - [ ] Lesson 10 — Evaluation metrics
 - [ ] Lesson 11 — Multiclass Logistic Regression
