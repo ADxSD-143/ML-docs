@@ -446,7 +446,7 @@ A higher threshold makes the model require a higher estimated probability before
 
 The coefficients are specified by hand to demonstrate the mechanics. This code does not train a model.
 
-\`\`\`python
+```python
 import math
 
 def sigmoid(z):
@@ -473,7 +473,7 @@ for hours in study_hours_values:
         f"Class at 0.5: {predictions[0]} | "
         f"Class at 0.8: {predictions[1]}"
     )
-\`\`\`
+```
 
 Notice that the probability stays the same for each study-hours value. Only the class label can change when the threshold changes.
 
@@ -519,9 +519,9 @@ Log Loss is also called **Binary Cross-Entropy (BCE)** for the binary classifica
 
 For one labelled example, the binary log loss is:
 
-$
+$$
 L(y,p)=-\left[y\ln(p)+(1-y)\ln(1-p)\right]
-$
+$$
 
 Here, $\ln$ is the natural logarithm.
 
@@ -531,12 +531,12 @@ This single formula handles both possible labels.
 
 Substitute $y=1$:
 
-$
+$$
 \begin{aligned}
 L(1,p)&=-\left[1\ln(p)+0\ln(1-p)\right] \\
 &=-\ln(p)
 \end{aligned}
-$
+$$
 
 Only the predicted probability of class $1$ matters. If $p$ is close to $1$, the loss is small. If $p$ is close to $0$, the loss becomes large.
 
@@ -544,12 +544,12 @@ Only the predicted probability of class $1$ matters. If $p$ is close to $1$, the
 
 Substitute $y=0$:
 
-$
+$$
 \begin{aligned}
 L(0,p)&=-\left[0\ln(p)+1\ln(1-p)\right] \\
 &=-\ln(1-p)
 \end{aligned}
-$
+$$
 
 Now the model is rewarded for assigning a high probability to class $0$, which is $1-p$.
 
@@ -559,17 +559,17 @@ Now the model is rewarded for assigning a high probability to class $0$, which i
 
 If $y=1$ and $p=0.9$:
 
-$
+$$
 L=-\ln(0.9)\approx0.1054
-$
+$$
 
 This is a low loss because the model assigned 90% probability to the correct class.
 
 If $y=1$ and $p=0.1$:
 
-$
+$$
 L=-\ln(0.1)\approx2.3026
-$
+$$
 
 This is much larger because the model assigned only 10% probability to the correct class.
 
@@ -577,9 +577,9 @@ This is much larger because the model assigned only 10% probability to the corre
 
 If $y=0$ and $p=0.2$, the probability assigned to the true class is $1-p=0.8$:
 
-$
+$$
 L=-\ln(1-0.2)=-\ln(0.8)\approx0.2231
-$
+$$
 
 The prediction is reasonably good, so the loss is relatively small.
 
@@ -587,10 +587,10 @@ The prediction is reasonably good, so the loss is relatively small.
 
 For $n$ examples, calculate the loss for each example and take the mean:
 
-$
+$$
 J=-\frac{1}{n}\sum_{i=1}^{n}
 \left[y_i\ln(p_i)+(1-y_i)\ln(1-p_i)\right]
-$
+$$
 
 Where:
 - $n$ is the number of training examples.
@@ -612,10 +612,10 @@ Suppose the true labels and predicted probabilities are:
 
 The average loss is:
 
-$
+$$
 J=\\frac{0.1054+0.2231+0.3567}{3}
 \\approx0.2284
-$
+$$
 
 This number measures the average probability penalty for these predictions. **Lower Log Loss is better when evaluating comparable predictions on the same target data.** Always compare models on the same evaluation examples and avoid using the test set to tune the model.
 
@@ -629,9 +629,9 @@ The logarithm explains the behaviour:
 
 For example, with true label $y=1$, predicting $p=0.01$ gives:
 
-$
+$$
 L=-\\ln(0.01)\\approx4.6052
-$
+$$
 
 That is much worse than predicting $p=0.9$, which gives a loss of only about $0.1054$.
 
@@ -641,21 +641,21 @@ Log Loss is a **proper scoring rule**: in expectation, it rewards reporting hone
 
 For one binary observation, the Bernoulli probability of observing label $y$ when the model predicts probability $p$ is:
 
-$
+$$
 P(y\\mid p)=p^y(1-p)^{1-y}
-$
+$$
 
 Taking the natural logarithm gives:
 
-$
+$$
 \\ln P(y\\mid p)=y\\ln(p)+(1-y)\\ln(1-p)
-$
+$$
 
 Negating that log probability produces the binary log loss:
 
-$
+$$
 L(y,p)=-\\ln P(y\\mid p)
-$
+$$
 
 Across independent labelled examples, minimizing the sum of negative log probabilities is equivalent to maximizing the likelihood of the observed labels. This is the bridge to **Maximum Likelihood Estimation (MLE)**, which is the next major theory lesson.
 
@@ -663,7 +663,7 @@ Across independent labelled examples, minimizing the sum of negative log probabi
 
 This code computes each example's loss and the average. Probabilities are clipped to avoid evaluating the logarithm at exactly $0$ due to numerical rounding or invalid extreme predictions.
 
-\`\`\`python
+```python
 import math
 
 
@@ -695,16 +695,16 @@ for index, loss in enumerate(losses, start=1):
     print(f"Example {index}: loss = {loss:.4f}")
 
 print(f"Average Log Loss = {average_loss:.4f}")
-\`\`\`
+```
 
 Expected output (rounded):
 
-\`\`\`text
+```text
 Example 1: loss = 0.1054
 Example 2: loss = 0.2231
 Example 3: loss = 0.3567
 Average Log Loss = 0.2284
-\`\`\`
+```
 
 The clipping is for numerical safety. It should not be used to hide invalid model outputs or data problems.
 
