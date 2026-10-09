@@ -10,7 +10,7 @@
 4. [Probability, odds, and log-odds](#lesson-4-probability-odds-and-log-odds)
 5. [Decision boundary and classification thresholds](#lesson-5-decision-boundary-and-classification-thresholds)
 6. [Log Loss / Binary Cross-Entropy](#lesson-6-log-loss--binary-cross-entropy)
-7. Maximum Likelihood Estimation (MLE)
+7. [Maximum Likelihood Estimation (MLE)](#lesson-7-maximum-likelihood-estimation-mle)
 8. Gradient Descent and coefficient learning
 9. Training Logistic Regression with scikit-learn
 10. Evaluation: confusion matrix, precision, recall, F1, ROC-AUC
@@ -791,6 +791,236 @@ Accuracy alone cannot tell these probability-quality differences apart. In pract
 
 ---
 
+---
+
+# Lesson 7: Maximum Likelihood Estimation (MLE)
+
+## 1. Why do we need MLE?
+
+In previous lessons, Logistic Regression learned to turn a linear score into a probability:
+
+z = b₀ + b₁x₁ + b₂x₂ + … + bₙxₙ
+
+p = 1 / (1 + e^(−z))
+
+But this raises a key question: **which values of the coefficients b₀, b₁, …, bₙ should the model choose?**
+
+Maximum Likelihood Estimation (MLE) is a principle for choosing parameter values that make the observed training labels most likely under the model.
+
+For Logistic Regression, the model estimates a probability pᵢ for each training example. MLE selects coefficients that maximize the probability of observing the labels we actually have.
+
+## 2. Bernoulli probability for one binary label
+
+For a binary target y, the label must be either 0 or 1. If the model predicts probability p for class 1, then:
+
+- Probability of observing y = 1 is p.
+- Probability of observing y = 0 is 1 − p.
+
+Both cases can be represented with one expression:
+
+P(y | p) = pʸ × (1 − p)^(1 − y)
+
+Check the two cases:
+
+- If y = 1: P(y | p) = p¹ × (1 − p)⁰ = p.
+- If y = 0: P(y | p) = p⁰ × (1 − p)¹ = 1 − p.
+
+This is the Bernoulli probability model. In Logistic Regression, p is not a fixed constant; it comes from the model's input features and coefficients.
+
+## 3. Likelihood across a dataset
+
+Suppose the dataset has n labelled observations. For each example i, the model predicts probability pᵢ and observes label yᵢ.
+
+Assuming the observations are independent given the model, the likelihood is the product of their individual probabilities:
+
+L(b) = product for i = 1 to n of [pᵢ^yᵢ × (1 − pᵢ)^(1 − yᵢ)]
+
+Here, b represents the collection of model coefficients. Each pᵢ depends on those coefficients:
+
+pᵢ = 1 / (1 + e^(−zᵢ))
+
+zᵢ = b₀ + b₁xᵢ₁ + b₂xᵢ₂ + … + bₙxᵢₙ
+
+**Important distinction:** Likelihood is a function of the model parameters for the observed data. It is not the probability that the parameters themselves are true.
+
+MLE chooses the coefficient values that maximize L(b):
+
+b_MLE = argmax over b of L(b)
+
+The likelihood is a product of values between 0 and 1. As the dataset grows, multiplying many probabilities can produce extremely small numbers, which can cause numerical underflow.
+
+## 4. Why use log-likelihood?
+
+The natural logarithm is strictly increasing. Therefore, maximizing the likelihood and maximizing its natural logarithm select the same parameter values.
+
+Define the log-likelihood:
+
+ℓ(b) = ln(L(b))
+
+Using the rule ln(a × c) = ln(a) + ln(c), the product becomes a sum:
+
+ℓ(b) = Σ(i = 1…n) [yᵢ × ln(pᵢ) + (1 − yᵢ) × ln(1 − pᵢ)]
+
+This is easier to calculate and work with mathematically than a product of many small probabilities.
+
+MLE therefore chooses:
+
+b_MLE = argmax over b of ℓ(b)
+
+## 5. Deriving Log Loss from MLE
+
+Optimization algorithms commonly minimize an objective, so we take the negative log-likelihood:
+
+NLL(b) = −ℓ(b)
+
+NLL(b) = −Σ(i = 1…n) [yᵢ × ln(pᵢ) + (1 − yᵢ) × ln(1 − pᵢ)]
+
+If we divide by the number of examples n, we get the average binary Log Loss:
+
+J(b) = −(1/n) Σ(i = 1…n) [yᵢ × ln(pᵢ) + (1 − yᵢ) × ln(1 − pᵢ)]
+
+This is the Binary Cross-Entropy formula from Lesson 6.
+
+Therefore, for standard unregularized binary Logistic Regression:
+
+**Maximizing log-likelihood is equivalent to minimizing the sum of Log Loss; minimizing average Log Loss gives the same optimum because it only scales the objective by the positive constant 1/n.**
+
+If regularization is added, the objective includes an additional penalty term. We will cover that later.
+
+## 6. Numerical example: compare two probability models
+
+Suppose the true labels are:
+
+y = [1, 0, 1]
+
+Consider two models that produce different probabilities for class 1.
+
+**Model A**
+
+p = [0.8, 0.3, 0.6]
+
+The probabilities assigned to the observed labels are:
+
+- Example 1: y = 1, so probability of its true label = 0.8.
+- Example 2: y = 0, so probability of its true label = 1 − 0.3 = 0.7.
+- Example 3: y = 1, so probability of its true label = 0.6.
+
+Likelihood:
+
+L_A = 0.8 × 0.7 × 0.6 = 0.336
+
+Log-likelihood:
+
+ℓ_A = ln(0.336) ≈ −1.0906
+
+Average Log Loss:
+
+J_A = −ℓ_A / 3 ≈ 0.3635
+
+**Model B**
+
+p = [0.9, 0.1, 0.8]
+
+The probabilities assigned to the observed labels are 0.9, 0.9, and 0.8.
+
+Likelihood:
+
+L_B = 0.9 × 0.9 × 0.8 = 0.648
+
+Log-likelihood:
+
+ℓ_B = ln(0.648) ≈ −0.4339
+
+Average Log Loss:
+
+J_B = −ℓ_B / 3 ≈ 0.1446
+
+Model B has a higher likelihood and a lower average Log Loss on these examples, so it fits these observed labels better under this criterion. This small illustration alone does not prove that Model B generalizes better to unseen data.
+
+## 7. Python practice: calculate likelihood and log-likelihood
+
+This code compares the two sets of probabilities above. It **does not train** Logistic Regression or learn coefficients; it only calculates the likelihood-based quantities for given predictions.
+
+```python
+import math
+
+
+def evaluate_likelihood(y_true, probabilities):
+    if len(y_true) != len(probabilities) or len(y_true) == 0:
+        raise ValueError("Inputs must have equal, non-zero lengths.")
+
+    log_likelihood = 0.0
+
+    for y, p in zip(y_true, probabilities):
+        if y not in (0, 1):
+            raise ValueError("Every true label must be 0 or 1.")
+
+        if not 0 < p < 1:
+            raise ValueError("Probabilities must be strictly between 0 and 1.")
+
+        # Log probability of the observed label for this example.
+        log_likelihood += y * math.log(p) + (1 - y) * math.log(1 - p)
+
+    # The sum of log probabilities equals log of the likelihood.
+    likelihood = math.exp(log_likelihood)
+    average_log_loss = -log_likelihood / len(y_true)
+
+    return likelihood, log_likelihood, average_log_loss
+
+
+y_true = [1, 0, 1]
+model_a = [0.8, 0.3, 0.6]
+model_b = [0.9, 0.1, 0.8]
+
+for name, probabilities in [("Model A", model_a), ("Model B", model_b)]:
+    likelihood, log_likelihood, avg_loss = evaluate_likelihood(
+        y_true, probabilities
+    )
+
+    print(name)
+    print(f"  Likelihood:       {likelihood:.4f}")
+    print(f"  Log-likelihood:   {log_likelihood:.4f}")
+    print(f"  Average Log Loss: {avg_loss:.4f}")
+```
+
+Expected output (rounded):
+
+```text
+Model A
+  Likelihood:       0.3360
+  Log-likelihood:   -1.0906
+  Average Log Loss: 0.3635
+Model B
+  Likelihood:       0.6480
+  Log-likelihood:   -0.4339
+  Average Log Loss: 0.1446
+```
+
+For larger datasets, calculate log-likelihood directly rather than multiplying probabilities first. The direct product can underflow to zero even when the log-likelihood calculation remains numerically manageable. The code forms a product only at the end for this small teaching example.
+
+## 8. How does MLE learn the actual coefficients?
+
+In a fitted Logistic Regression model, each probability is determined by the coefficients:
+
+pᵢ = 1 / (1 + e^(−(b₀ + b₁xᵢ₁ + … + bₙxᵢₙ)))
+
+MLE changes those coefficients to improve the overall log-likelihood of the observed training labels. For standard Logistic Regression, there is generally no simple closed-form solution for all coefficients, so an iterative numerical optimizer is used (for example, a gradient-based method or a quasi-Newton method).
+
+The next lesson will derive the gradient of the Log Loss objective and show how gradient descent updates model coefficients.
+
+## Key takeaways
+
+- MLE chooses parameters that maximize the likelihood of observed training labels.
+- For binary targets, the Bernoulli probability is pʸ × (1 − p)^(1 − y).
+- Independent observation probabilities multiply to form the likelihood.
+- Log-likelihood converts that product into a sum and is easier to optimize numerically.
+- Maximizing log-likelihood is equivalent to minimizing negative log-likelihood.
+- Average negative log-likelihood is Binary Cross-Entropy / average Log Loss.
+- The code in this lesson evaluates given probability predictions; it does not fit model coefficients yet.
+
+**Next:** Lesson 8 — Gradient Descent and coefficient learning.
+
+
 ## Progress tracker
 
 - [x] Lesson 1 — Classification fundamentals
@@ -799,7 +1029,7 @@ Accuracy alone cannot tell these probability-quality differences apart. In pract
 - [x] Lesson 4 — Probability, odds, and log-odds
 - [x] Lesson 5 — Decision boundary and classification thresholds
 - [x] Lesson 6 — Log Loss / cost function
-- [ ] Lesson 7 — Maximum Likelihood Estimation
+- [x] Lesson 7 — Maximum Likelihood Estimation
 - [ ] Lesson 8 — Gradient Descent and coefficient learning
 - [ ] Lesson 9 — scikit-learn implementation
 - [ ] Lesson 10 — Evaluation metrics
