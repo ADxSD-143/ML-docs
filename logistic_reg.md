@@ -8,7 +8,7 @@
 2. [Linear Regression vs Logistic Regression](#lesson-2-linear-regression-vs-logistic-regression)
 3. [Sigmoid function](#lesson-3-sigmoid-function)
 4. [Probability, odds, and log-odds](#lesson-4-probability-odds-and-log-odds)
-5. Decision boundary and classification thresholds *(next)*
+5. [Decision boundary and classification thresholds](#lesson-5-decision-boundary-and-classification-thresholds)
 6. Cost function / Log Loss
 7. Maximum Likelihood Estimation (MLE)
 8. Gradient Descent and coefficient learning
@@ -330,6 +330,174 @@ Expected results: odds = 4.0, log-odds $\approx1.3863$, recovered probability = 
 
 Logistic Regression models log-odds linearly and uses the sigmoid function to obtain a probability estimate. Odds are a probability ratio; log-odds are the natural logarithm of that ratio.
 
+
+---
+
+# Lesson 5: Decision Boundary and Classification Thresholds
+
+## 1. Probability is not the same as a class prediction
+
+Logistic Regression first estimates the probability of the positive class:
+
+$
+p = \frac{1}{1+e^{-z}}
+$
+
+It then uses a **decision threshold** to convert that probability into a class label. A common default threshold is 0.5:
+
+- If $p \geq 0.5$, predict class $1$.
+- If $p < 0.5$, predict class $0$.
+
+The threshold is a decision rule applied after probability estimation. Changing it does not, by itself, retrain the model or change its predicted probabilities.
+
+## 2. What is a decision boundary?
+
+A decision boundary is the point, line, or surface where a model switches from predicting one class to the other.
+
+For a single-feature Logistic Regression model:
+
+$
+z=b_0+b_1x
+$
+
+At threshold $0.5$, the boundary occurs where $p=0.5$. Since the sigmoid function equals $0.5$ when $z=0$, the boundary equation is:
+
+$
+b_0+b_1x=0
+$
+
+Solving for $x$ (when $b_1 \neq 0$):
+
+$
+x=-\frac{b_0}{b_1}
+$
+
+For multiple features, the 0.5-threshold boundary is:
+
+$
+b_0+b_1x_1+b_2x_2+\cdots+b_nx_n=0
+$
+
+This is a hyperplane in the feature space. With one feature it is a point; with two features it is a line; with three features it is a plane. If nonlinear features are engineered, the boundary may look nonlinear when plotted against the original features.
+
+## 3. Numerical example
+
+Suppose the model's score is:
+
+$
+z=-4+1.2x
+$
+
+Here, $x$ is study hours. At threshold $0.5$, set $z=0$:
+
+$
+\begin{aligned}
+-4+1.2x&=0 \\
+1.2x&=4 \\
+x&=\frac{4}{1.2}\approx3.333
+\end{aligned}
+$
+
+So the 0.5-threshold boundary is approximately 3.33 study hours for this illustrative model.
+
+- Below 3.33 hours, the model predicts class $0$.
+- Above 3.33 hours, it predicts class $1$.
+- At the boundary, the estimated probability is exactly $0.5$; using the rule $p \geq 0.5$ predicts class $1$ at equality.
+
+This is an illustration with manually chosen coefficients, not a real or validated model of exam outcomes.
+
+## 4. What happens when the threshold changes?
+
+For a general threshold $t$ where $0<t<1$, the boundary satisfies $p=t$. Inverting the sigmoid gives:
+
+$
+z=\ln\left(\frac{t}{1-t}\right)
+$
+
+For $z=b_0+b_1x$, the boundary is therefore:
+
+$
+x=\frac{\ln\left(\frac{t}{1-t}\right)-b_0}{b_1}
+$
+
+Using $z=-4+1.2x$:
+
+**Threshold $t=0.5$**
+
+$
+z=\ln\left(\frac{0.5}{0.5}\right)=\ln(1)=0
+$
+
+The boundary is $x\approx3.333$.
+
+**Threshold $t=0.8$**
+
+$
+z=\ln\left(\frac{0.8}{0.2}\right)=\ln(4)\approx1.3863
+$
+
+$
+x=\frac{1.3863+4}{1.2}\approx4.489
+$
+
+A higher threshold makes the model require a higher estimated probability before predicting class $1$. For this model, the boundary moves from about 3.33 to 4.49 study hours.
+
+## 5. Python practice: compare thresholds
+
+The coefficients are specified by hand to demonstrate the mechanics. This code does not train a model.
+
+\`\`\`python
+import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def predict_probability(study_hours):
+    z = -4 + 1.2 * study_hours
+    return sigmoid(z)
+
+thresholds = [0.5, 0.8]
+study_hours_values = [2, 3, 3.3333333333, 4, 5, 6]
+
+for hours in study_hours_values:
+    probability = predict_probability(hours)
+
+    predictions = [
+        int(probability >= threshold)
+        for threshold in thresholds
+    ]
+
+    print(
+        f"Hours: {hours:5.2f} | "
+        f"Probability: {probability:.4f} | "
+        f"Class at 0.5: {predictions[0]} | "
+        f"Class at 0.8: {predictions[1]}"
+    )
+\`\`\`
+
+Notice that the probability stays the same for each study-hours value. Only the class label can change when the threshold changes.
+
+## 6. How to choose a threshold
+
+A threshold of 0.5 is common, but it is not always the best choice. The appropriate threshold depends on the problem and the cost of different errors.
+
+- **Lower threshold:** more observations are likely to be predicted as positive. This often helps recall, but can create more false positives.
+- **Higher threshold:** fewer observations are predicted as positive. This often reduces false positives, but can miss more actual positives.
+- **Threshold selection:** choose it using validation data and a metric or cost that matches the task. Do not tune the threshold on the final test set.
+
+For example, a screening system may prioritize catching as many positive cases as possible, while a costly manual-review workflow may need to limit false alarms. The appropriate choice must be justified by the application's costs and requirements.
+
+## Key takeaways
+
+- Probability estimation and class prediction are two separate steps.
+- The threshold converts probabilities into class labels.
+- At threshold $0.5$, the decision boundary is where the linear score $z=0$.
+- For any threshold $t$, the boundary score is $\ln(t/(1-t))$.
+- A threshold changes class labels, not the model's learned coefficients or probability estimates.
+- Thresholds should be selected on validation data with the task's error costs in mind.
+
+**Next:** Lesson 6 — Log Loss (the Logistic Regression cost function).
+
 ---
 
 ## Progress tracker
@@ -338,7 +506,7 @@ Logistic Regression models log-odds linearly and uses the sigmoid function to ob
 - [x] Lesson 2 — Linear vs Logistic Regression
 - [x] Lesson 3 — Sigmoid function
 - [x] Lesson 4 — Probability, odds, and log-odds
-- [ ] Lesson 5 — Decision boundary and classification thresholds
+- [x] Lesson 5 — Decision boundary and classification thresholds
 - [ ] Lesson 6 — Log Loss / cost function
 - [ ] Lesson 7 — Maximum Likelihood Estimation
 - [ ] Lesson 8 — Gradient Descent and coefficient learning
