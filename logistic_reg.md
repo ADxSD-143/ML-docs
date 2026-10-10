@@ -2045,6 +2045,81 @@ FPR is undefined if there are no actual negative examples (FP + TN = 0). The cod
 
 ---
 
+### Step 13: False Negative Rate (FNR)
+
+False Negative Rate answers this question:
+
+**Out of all examples that actually belong to class 1, how many did the model incorrectly predict as class 0?**
+
+In our student example:
+- Class 0 = Fail
+- Class 1 = Pass
+
+Use the confusion matrix from Step 7:
+
+```text
+                 Predicted
+                 0    1
+Actual  0        2    1
+        1        1    3
+```
+
+Here:
+- **FN = 1:** one student actually passed, but the model predicted Fail.
+- **TP = 3:** three students actually passed, and the model correctly predicted Pass.
+
+There were four actual positive cases in total: FN + TP = 1 + 3 = 4. The model missed one of them.
+
+False Negative Rate = FN / (FN + TP)
+
+False Negative Rate = 1 / (1 + 3) = 1 / 4 = 0.25 = 25%
+
+So the model's **False Negative Rate is 25%**. A false negative is an actual positive case the model misses.
+
+Recall and FNR are complementary:
+
+```text
+FNR = FN / (FN + TP)
+Recall = TP / (TP + FN)
+FNR = 1 − Recall
+```
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix
+
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(y_true, y_pred_example, labels=[0, 1])
+tn, fp, fn, tp = cm.ravel()
+
+fnr = fn / (fn + tp) if (fn + tp) > 0 else 0.0
+
+print("FN:", fn)
+print("TP:", tp)
+print("False Negative Rate:", fnr)
+print(f"False Negative Rate (%): {fnr * 100:.1f}%")
+```
+
+Expected output:
+
+```text
+FN: 1
+TP: 3
+False Negative Rate: 0.25
+False Negative Rate (%): 25.0%
+```
+
+FNR is undefined if there are no actual positive examples (FN + TP = 0). The code uses 0.0 for that edge case to avoid division by zero.
+
+**For this step, focus only on FNR = FN / (FN + TP).** We will continue one evaluation concept at a time.
+
+**Checkpoint:** If FN = 3 and TP = 9, what is the False Negative Rate? Calculate FN / (FN + TP) before continuing.
+
+---
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
