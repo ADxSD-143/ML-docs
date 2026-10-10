@@ -1970,6 +1970,81 @@ Specificity is undefined if there are no actual negative examples (TN + FP = 0).
 
 ---
 
+### Step 12: False Positive Rate (FPR)
+
+False Positive Rate answers this question:
+
+**Out of all examples that actually belong to class 0, how many did the model incorrectly predict as class 1?**
+
+In our student example:
+- Class 0 = Fail
+- Class 1 = Pass
+
+Use the confusion matrix from Step 7:
+
+```text
+                 Predicted
+                 0    1
+Actual  0        2    1
+        1        1    3
+```
+
+Here:
+- **FP = 1:** one student actually failed, but the model predicted Pass.
+- **TN = 2:** two students actually failed, and the model correctly predicted Fail.
+
+There were three actual negative cases in total: TN + FP = 2 + 1 = 3. One of those three was incorrectly predicted as positive.
+
+False Positive Rate = FP / (FP + TN)
+
+False Positive Rate = 1 / (1 + 2) = 1 / 3 ≈ 0.333 = 33.3%
+
+So the model's **False Positive Rate is approximately 33.3%**. A lower FPR means fewer actual negative cases are incorrectly labelled positive.
+
+Specificity and FPR describe opposite outcomes among actual negative cases:
+
+```text
+FPR = FP / (FP + TN)
+Specificity = TN / (TN + FP)
+FPR = 1 − Specificity
+```
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix
+
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(y_true, y_pred_example, labels=[0, 1])
+tn, fp, fn, tp = cm.ravel()
+
+fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+
+print("FP:", fp)
+print("TN:", tn)
+print("False Positive Rate:", fpr)
+print(f"False Positive Rate (%): {fpr * 100:.1f}%")
+```
+
+Expected output:
+
+```text
+FP: 1
+TN: 2
+False Positive Rate: 0.3333333333333333
+False Positive Rate (%): 33.3%
+```
+
+FPR is undefined if there are no actual negative examples (FP + TN = 0). The code uses 0.0 for that edge case so the example can run without division by zero.
+
+**For this step, focus only on FPR = FP / (FP + TN).** We will continue one evaluation concept at a time.
+
+**Checkpoint:** If FP = 4 and TN = 16, what is the False Positive Rate? Calculate FP / (FP + TN) before continuing.
+
+---
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
