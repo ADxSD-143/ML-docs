@@ -1740,6 +1740,82 @@ The manual calculation and scikit-learn result should agree. If a model does not
 
 **For this step, focus only on Precision = TP / (TP + FP).** We will learn other metrics one at a time in later steps.
 
+### Step 9: Recall
+
+Recall answers this question:
+
+**Out of all examples that actually belong to class 1, how many did the model correctly predict as class 1?**
+
+In our student example:
+- Class 0 = Fail
+- Class 1 = Pass
+
+Use the confusion matrix from Step 7:
+
+```text
+                 Predicted
+                 0    1
+Actual  0        2    1
+        1        1    3
+```
+
+We counted:
+- **TP = 3:** three students actually passed and the model predicted Pass.
+- **FN = 1:** one student actually passed, but the model predicted Fail.
+
+There were four students who actually passed: TP + FN = 3 + 1 = 4. The model correctly identified three of them.
+
+Recall = TP / (TP + FN)
+
+Recall = 3 / (3 + 1) = 3 / 4 = 0.75 = 75%
+
+So the model's **Recall for class 1 is 75%**. In plain language: it correctly identified 75% of all students who actually passed.
+
+A false negative lowers Recall because it is an actual positive case the model missed.
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix, recall_score
+
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(y_true, y_pred_example, labels=[0, 1])
+tn, fp, fn, tp = cm.ravel()
+
+# Calculate Recall directly from confusion-matrix counts
+recall_manual = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+
+# scikit-learn calculates Recall for the positive class (label 1)
+recall_sklearn = recall_score(
+    y_true,
+    y_pred_example,
+    pos_label=1,
+    zero_division=0
+)
+
+print("TP:", tp)
+print("FN:", fn)
+print("Recall (manual):", recall_manual)
+print("Recall (scikit-learn):", recall_sklearn)
+print(f"Recall (%): {recall_sklearn * 100:.1f}%")
+```
+
+Expected output:
+
+```text
+TP: 3
+FN: 1
+Recall (manual): 0.75
+Recall (scikit-learn): 0.75
+Recall (%): 75.0%
+```
+
+The manual calculation and scikit-learn result should agree. If there are no actual positive examples, TP + FN is zero and Recall is undefined; here, `zero_division=0` tells scikit-learn to return 0 for that edge case.
+
+**For this step, focus only on Recall = TP / (TP + FN).** We will keep learning one evaluation metric at a time.
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
