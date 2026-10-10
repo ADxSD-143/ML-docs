@@ -1816,6 +1816,82 @@ The manual calculation and scikit-learn result should agree. If there are no act
 
 **For this step, focus only on Recall = TP / (TP + FN).** We will keep learning one evaluation metric at a time.
 
+### Step 10: F1-score
+
+F1-score combines **Precision** and **Recall** into one metric. It is useful when we want a balance between avoiding false positives and finding actual positive cases.
+
+The formula is:
+
+```text
+F1-score = 2 × Precision × Recall / (Precision + Recall)
+```
+
+Using the counts from our student example:
+- **TP = 3:** correctly predicted Pass.
+- **FP = 1:** predicted Pass, but the student actually failed.
+- **FN = 1:** predicted Fail, but the student actually passed.
+
+We can calculate F1 directly from these counts:
+
+```text
+F1-score = 2 × TP / (2 × TP + FP + FN)
+         = 2 × 3 / (2 × 3 + 1 + 1)
+         = 6 / 8
+         = 0.75 = 75%
+```
+
+So the F1-score for class 1 is **75%**. A higher F1-score generally indicates a better balance between Precision and Recall. If one of those two metrics is very low, F1-score will also be low. F1-score does not use True Negatives (TN) in its formula.
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix, f1_score
+
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(y_true, y_pred_example, labels=[0, 1])
+tn, fp, fn, tp = cm.ravel()
+
+# Calculate F1-score directly from the confusion-matrix counts
+denominator = 2 * tp + fp + fn
+f1_manual = (2 * tp / denominator) if denominator > 0 else 0.0
+
+# scikit-learn calculates F1-score for the positive class (label 1)
+f1_sklearn = f1_score(
+    y_true,
+    y_pred_example,
+    pos_label=1,
+    zero_division=0
+)
+
+print("TP:", tp)
+print("FP:", fp)
+print("FN:", fn)
+print("F1-score (manual):", f1_manual)
+print("F1-score (scikit-learn):", f1_sklearn)
+print(f"F1-score (%): {f1_sklearn * 100:.1f}%")
+```
+
+Expected output:
+
+```text
+TP: 3
+FP: 1
+FN: 1
+F1-score (manual): 0.75
+F1-score (scikit-learn): 0.75
+F1-score (%): 75.0%
+```
+
+The manual result and scikit-learn result should agree. If there are no predicted positives and no actual positives, the formula's denominator is zero; `zero_division=0` tells scikit-learn to return 0 for that edge case.
+
+**For this step, focus only on F1-score.** We will continue one evaluation metric at a time.
+
+**Checkpoint:** If TP = 8, FP = 2, and FN = 2, what is the F1-score? Try calculating it before checking the next lesson.
+
+---
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
