@@ -1472,6 +1472,58 @@ They are not coefficients for the original unscaled numbers. A positive coeffici
 
 **For this step, focus only on `model.fit(X_train, y_train)`: it is the point where the Pipeline learns from the training examples. We will use `predict()` and `predict_proba()` in the next step.**
 
+### Step 5: `predict()` versus `predict_proba()`
+
+In Step 4, `model.fit(X_train, y_train)` trained the Pipeline. Continue in the same Python file, below the Step 4 code, so that the variables `model`, `X_test`, and `y_test` already exist.
+
+```python
+# Predict the final class: 0 or 1
+y_pred = model.predict(X_test)
+
+# Predict probabilities for both classes
+probabilities = model.predict_proba(X_test)
+
+# Check which column corresponds to each class
+classifier = model.named_steps["logisticregression"]
+print("Class order:", classifier.classes_)
+
+print("\nActual test labels:", y_test)
+print("Predicted labels:", y_pred)
+print("\nProbabilities [class 0, class 1]:")
+print(np.round(probabilities, 4))
+
+# Column 1 is class 1 (Pass) because classes_ is [0, 1]
+p_pass = probabilities[:, 1]
+print("\nProbability of Pass:", np.round(p_pass, 4))
+```
+
+Expected output (rounded, with the Step 3 split using `random_state=42`):
+
+```text
+Class order: [0 1]
+
+Actual test labels: [0 1]
+Predicted labels: [0 1]
+
+Probabilities [class 0, class 1]:
+[[0.7361 0.2639]
+ [0.1481 0.8519]]
+
+Probability of Pass: [0.2639 0.8519]
+```
+
+#### What is the difference?
+
+- **`predict(X_test)`** gives a class label for each test row. With the default binary decision rule, the model usually predicts class 1 when its class-1 probability is at least 0.5; otherwise it predicts class 0.
+- **`predict_proba(X_test)`** gives the probability for every class. Each row corresponds to one observation, and each column corresponds to a class in the order shown by `classes_`.
+- In this toy dataset, `classes_` is `[0, 1]`, so column 0 is Fail and column 1 is Pass.
+- For the first test student, the model estimates 26.39% for Pass and 73.61% for Fail, so it predicts class 0.
+- For the second test student, it estimates 85.19% for Pass and 14.81% for Fail, so it predicts class 1.
+
+The probabilities are estimates, not guarantees. Also, a predicted class and a predicted probability answer different questions: `predict()` answers “which class?”, while `predict_proba()` answers “what probability did the model assign to each class?”
+
+**Do not evaluate the model yet in this step.** First make sure the difference between labels and probabilities is clear; metrics come later.
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
