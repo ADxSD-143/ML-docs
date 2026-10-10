@@ -1892,6 +1892,84 @@ The manual result and scikit-learn result should agree. If there are no predicte
 
 ---
 
+### Step 11: Specificity
+
+Specificity answers this question:
+
+**Out of all examples that actually belong to class 0, how many did the model correctly predict as class 0?**
+
+In our student example:
+- Class 0 = Fail
+- Class 1 = Pass
+
+Use the confusion matrix from Step 7:
+
+```text
+                 Predicted
+                 0    1
+Actual  0        2    1
+        1        1    3
+```
+
+We counted:
+- **TN = 2:** two students actually failed, and the model correctly predicted Fail.
+- **FP = 1:** one student actually failed, but the model incorrectly predicted Pass.
+
+There were three students who actually failed: TN + FP = 2 + 1 = 3. The model correctly identified two of them.
+
+Specificity = TN / (TN + FP)
+
+Specificity = 2 / (2 + 1) = 2 / 3 ≈ 0.667 = 66.7%
+
+So the model's **Specificity for class 0 is approximately 66.7%**. A false positive lowers Specificity because it is an actual negative case incorrectly predicted as positive.
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix, recall_score
+
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(y_true, y_pred_example, labels=[0, 1])
+tn, fp, fn, tp = cm.ravel()
+
+# Calculate Specificity manually
+specificity_manual = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+
+# Recall for class 0 is equivalent to Specificity for class 1
+specificity_sklearn = recall_score(
+    y_true,
+    y_pred_example,
+    pos_label=0,
+    zero_division=0
+)
+
+print("TN:", tn)
+print("FP:", fp)
+print("Specificity (manual):", specificity_manual)
+print("Specificity (scikit-learn):", specificity_sklearn)
+print(f"Specificity (%): {specificity_sklearn * 100:.1f}%")
+```
+
+Expected output:
+
+```text
+TN: 2
+FP: 1
+Specificity (manual): 0.6666666666666666
+Specificity (scikit-learn): 0.6666666666666666
+Specificity (%): 66.7%
+```
+
+Specificity is undefined if there are no actual negative examples (TN + FP = 0). Here, `zero_division=0` tells scikit-learn to return 0 for that edge case.
+
+**For this step, focus only on Specificity = TN / (TN + FP).** We will continue one evaluation metric at a time.
+
+**Checkpoint:** If TN = 9 and FP = 3, what is Specificity? Calculate TN / (TN + FP) before continuing.
+
+---
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
