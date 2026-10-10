@@ -1524,6 +1524,42 @@ The probabilities are estimates, not guarantees. Also, a predicted class and a p
 
 **Do not evaluate the model yet in this step.** First make sure the difference between labels and probabilities is clear; metrics come later.
 
+### Step 6: Evaluate predictions with accuracy
+
+So far we have two things:
+- `y_test`: the correct answers for the held-out test rows.
+- `y_pred`: the model's predicted class labels for those same rows.
+
+Accuracy tells us what fraction of the predictions match the correct answers.
+
+Accuracy = number of correct predictions / total number of predictions
+
+For this toy example, both test predictions are correct, so accuracy is 2 / 2 = 1.0, or 100%. However, the test set contains only two rows, so this result is too small to tell us reliably how the model would perform on new students.
+
+```python
+from sklearn.metrics import accuracy_score
+
+print("Actual labels:", y_test)
+print("Predicted labels:", y_pred)
+
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+print(f"Accuracy (%): {accuracy * 100:.1f}%")
+```
+
+Expected output for the same toy split:
+
+```text
+Actual labels: [0 1]
+Predicted labels: [0 1]
+Accuracy: 1.0
+Accuracy (%): 100.0%
+```
+
+Accuracy is useful as a first check, but it does not tell us which kinds of mistakes the model makes, and it can be misleading if one class is much more common than the other. We will learn the confusion matrix and other metrics separately rather than adding everything at once.
+
+**Important:** use the test set for evaluation, not for fitting the model or repeatedly tuning it.
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
