@@ -1664,6 +1664,82 @@ This is a separate illustrative example, not the two-row test set from Steps 2â€
 
 **For this step, learn only how to read the four cells.** We will use these counts to learn additional evaluation metrics in later steps.
 
+### Step 8: Precision
+
+Precision answers this question:
+
+**Out of all examples the model predicted as class 1, how many were actually class 1?**
+
+In our student example:
+- Class 0 = Fail
+- Class 1 = Pass
+
+Using the confusion matrix from Step 7:
+
+```text
+                 Predicted
+                 0    1
+Actual  0        2    1
+        1        1    3
+```
+
+We counted:
+- TP = 3: the model predicted Pass and the student actually passed.
+- FP = 1: the model predicted Pass, but the student actually failed.
+
+The model predicted Pass for 4 students in total: 3 true positives and 1 false positive. Only 3 of those 4 predictions were correct.
+
+Precision = TP / (TP + FP)
+
+Precision = 3 / (3 + 1) = 3 / 4 = 0.75 = 75%
+
+So the model's **precision for class 1 is 75%**. In plain language: among the students the model predicted would Pass, 75% actually passed.
+
+Precision looks specifically at predicted positive cases. A false positive lowers precision because it adds an incorrect positive prediction.
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix, precision_score
+
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(y_true, y_pred_example, labels=[0, 1])
+tn, fp, fn, tp = cm.ravel()
+
+# Calculate precision manually from the confusion-matrix counts
+precision_manual = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+
+# scikit-learn calculates precision for the positive class (label 1)
+precision_sklearn = precision_score(
+    y_true,
+    y_pred_example,
+    pos_label=1,
+    zero_division=0
+)
+
+print("TP:", tp)
+print("FP:", fp)
+print("Precision (manual):", precision_manual)
+print("Precision (scikit-learn):", precision_sklearn)
+print(f"Precision (%): {precision_sklearn * 100:.1f}%")
+```
+
+Expected output:
+
+```text
+TP: 3
+FP: 1
+Precision (manual): 0.75
+Precision (scikit-learn): 0.75
+Precision (%): 75.0%
+```
+
+The manual calculation and scikit-learn result should agree. If a model does not predict any positive examples, the denominator TP + FP is zero; in that case precision is mathematically undefined. Here, `zero_division=0` tells scikit-learn to return 0 for that edge case.
+
+**For this step, focus only on Precision = TP / (TP + FP).** We will learn other metrics one at a time in later steps.
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
