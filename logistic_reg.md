@@ -1560,6 +1560,110 @@ Accuracy is useful as a first check, but it does not tell us which kinds of mist
 
 **Important:** use the test set for evaluation, not for fitting the model or repeatedly tuning it.
 
+### Step 7: Confusion matrix — TP, TN, FP, FN
+
+Accuracy tells us how many predictions were correct overall. The **confusion matrix** shows which predictions were right and which types of mistakes the model made.
+
+For this example, define:
+- Class 0 = negative class (Fail)
+- Class 1 = positive class (Pass)
+
+A confusion matrix compares the actual labels with the predicted labels. In scikit-learn, when we specify `labels=[0, 1]`, the rows are actual classes and the columns are predicted classes:
+
+```text
+                         Predicted
+                     0             1
+Actual 0           TN              FP
+Actual 1           FN              TP
+```
+
+The four terms are:
+
+- **TN — True Negative:** actual label is 0, and the model predicts 0.
+- **FP — False Positive:** actual label is 0, but the model predicts 1.
+- **FN — False Negative:** actual label is 1, but the model predicts 0.
+- **TP — True Positive:** actual label is 1, and the model predicts 1.
+
+"True" means the prediction matches the actual class; "False" means it does not. "Positive" refers to class 1, and "negative" refers to class 0.
+
+#### Small numerical example
+
+Use these actual labels and predictions:
+
+```python
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+```
+
+Compare each pair:
+
+| Actual | Predicted | Meaning |
+|---:|---:|---|
+| 0 | 0 | TN |
+| 0 | 0 | TN |
+| 0 | 1 | FP |
+| 1 | 0 | FN |
+| 1 | 1 | TP |
+| 1 | 1 | TP |
+| 1 | 1 | TP |
+
+Now count the outcomes:
+- TN = 2
+- FP = 1
+- FN = 1
+- TP = 3
+
+Therefore, the confusion matrix is:
+
+```text
+[[2, 1],
+ [1, 3]]
+```
+
+The top-left value is TN, top-right is FP, bottom-left is FN, and bottom-right is TP. Always check the class order before interpreting the matrix.
+
+#### Python code
+
+```python
+from sklearn.metrics import confusion_matrix
+
+# Illustrative predictions chosen to show all four outcomes
+y_true = [0, 0, 0, 1, 1, 1, 1]
+y_pred_example = [0, 0, 1, 0, 1, 1, 1]
+
+cm = confusion_matrix(
+    y_true,
+    y_pred_example,
+    labels=[0, 1]
+)
+
+print("Confusion matrix:")
+print(cm)
+
+tn, fp, fn, tp = cm.ravel()
+
+print("True Negatives (TN):", tn)
+print("False Positives (FP):", fp)
+print("False Negatives (FN):", fn)
+print("True Positives (TP):", tp)
+```
+
+Expected output:
+
+```text
+Confusion matrix:
+[[2 1]
+ [1 3]]
+True Negatives (TN): 2
+False Positives (FP): 1
+False Negatives (FN): 1
+True Positives (TP): 3
+```
+
+This is a separate illustrative example, not the two-row test set from Steps 2–6. Our earlier toy test set had only two observations and both happened to be correct, so its confusion matrix would not demonstrate all four types.
+
+**For this step, learn only how to read the four cells.** We will use these counts to learn additional evaluation metrics in later steps.
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
