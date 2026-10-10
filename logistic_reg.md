@@ -12,7 +12,7 @@
 6. [Log Loss / Binary Cross-Entropy](#lesson-6-log-loss--binary-cross-entropy)
 7. [Maximum Likelihood Estimation (MLE)](#lesson-7-maximum-likelihood-estimation-mle)
 8. [Gradient Descent and coefficient learning](#lesson-8-gradient-descent-and-coefficient-learning)
-9. Training Logistic Regression with scikit-learn
+9. [scikit-learn Logistic Regression training](#lesson-9-scikit-learn-logistic-regression--training-and-evaluation)
 10. Evaluation: confusion matrix, precision, recall, F1, ROC-AUC
 11. Multiclass Logistic Regression
 12. Regularization: L1 and L2
@@ -1305,6 +1305,355 @@ Gradient Descent is an optimizer, not a guarantee of generalization. Always eval
 **Next:** Lesson 9 — Training Logistic Regression with scikit-learn and comparing it with the from-scratch implementation.
 
 
+---
+
+# Lesson 9: scikit-learn Logistic Regression — Training and Evaluation
+
+## 1. Why use scikit-learn?
+
+In Lesson 8, we implemented Logistic Regression training with NumPy and Gradient Descent. In practice, scikit-learn provides a tested implementation with efficient solvers, regularization, prediction methods, and a consistent API.
+
+In this lesson we will:
+- Split data into training and test sets.
+- Scale features without data leakage.
+- Train Logistic Regression using `fit()`.
+- Generate class predictions with `predict()`.
+- Generate probabilities with `predict_proba()`.
+- Inspect learned coefficients and the intercept.
+- Evaluate accuracy, confusion matrix, precision, recall, F1-score, and Log Loss.
+- Compare scikit-learn with our from-scratch implementation.
+
+## 2. Install the libraries
+
+Run this in the project's terminal:
+
+```bash
+python -m pip install numpy scikit-learn
+```
+
+## 3. Dataset and target definition
+
+We will use scikit-learn's built-in Breast Cancer Wisconsin dataset as an educational binary-classification dataset. It has numerical features computed from digitized cell-nucleus images.
+
+For this lesson we explicitly define:
+- Class 0 = Benign
+- Class 1 = Malignant
+
+The dataset's original target labels use the opposite mapping, so we convert the target using `(data.target == 0).astype(int)`.
+
+This is a learning example, **not a medical diagnostic tool**.
+
+## 4. Train-test split and data leakage
+
+We need an evaluation set that is not used to fit the model. We split the data before training:
+
+```python
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+
+data = load_breast_cancer()
+X = data.data
+
+# Explicitly make Malignant the positive class (label 1).
+y = (data.target == 0).astype(int)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+```
+
+- `test_size=0.2` reserves 20% of the observations for testing.
+- `random_state=42` makes the split reproducible.
+- `stratify=y` keeps approximately the same class proportions in the training and test sets.
+
+### What is data leakage?
+
+Data leakage occurs when information that should be unavailable during training influences the learned model or preprocessing.
+
+For example, fitting a scaler on all rows before splitting allows test-set feature statistics to influence preprocessing. Instead, fit preprocessing on training data only, then apply the learned transform to test data.
+
+A scikit-learn `Pipeline` makes this safer: when we call `fit(X_train, y_train)`, the scaler is fitted only on the training split, followed by model training. At prediction time, the test data is transformed using that already-fitted scaler.
+
+## 5. Train the scikit-learn model
+
+```python
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+model = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(
+        C=1.0,
+        max_iter=2000,
+        solver="lbfgs"
+    )
+)
+
+model.fit(X_train, y_train)
+```
+
+### What does each part do?
+
+- `StandardScaler()` learns the mean and standard deviation of each feature from the training data, then standardizes the feature values.
+- `LogisticRegression(...)` creates the classifier.
+- `C=1.0` controls inverse regularization strength for this L2-regularized model: smaller C means stronger regularization; larger C means weaker regularization.
+- `max_iter=2000` permits enough solver iterations for convergence on this dataset.
+- `solver="lbfgs"` selects the optimization algorithm.
+- `fit()` learns the parameters from the training data.
+
+Feature scaling is especially useful when columns have very different numerical scales. The fitted scaler must be reused for future or test examples rather than refitted on them.
+
+## 6. predict() vs predict_proba()
+
+```python
+# Predict hard class labels (0 or 1)
+y_pred = model.predict(X_test)
+
+# Predict probability for each class
+probabilities = model.predict_proba(X_test)
+
+# Pipeline's final estimator has classes_ = [0, 1].
+# Column 1 is the probability of Malignant (our positive class).
+p_malignant = probabilities[:, 1]
+
+print("First 10 class predictions:", y_pred[:10])
+print("First 10 malignant probabilities:", p_malignant[:10])
+```
+
+- `predict()` returns a class label, using the estimator's decision rule.
+- `predict_proba()` returns one probability per class. The column order corresponds to `model.classes_` on the final estimator.
+- Here, column 1 means Malignant because we mapped Malignant to target label 1.
+
+The hard label is not the same as the probability. A default threshold of 0.5 is commonly used for binary prediction, but threshold selection can be changed for application-specific costs (Lesson 5).
+
+## 7. Inspect the learned coefficients
+
+```python
+import numpy as np
+
+classifier = model.named_steps["logisticregression"]
+coefficients = classifier.coef_[0]
+intercept = classifier.intercept_[0]
+
+print("Classes:", classifier.classes_)
+print("Intercept:", round(intercept, 4))
+print("First five coefficients:")
+
+for feature_name, coefficient in zip(data.feature_names[:5], coefficients[:5]):
+    print(f"{feature_name}: {coefficient:.4f}")
+
+# Odds ratio for a one-standard-deviation increase in each feature
+odds_ratios = np.exp(coefficients)
+print("First five odds ratios:", np.round(odds_ratios[:5], 3))
+```
+
+For each observation, the model's linear score is:
+
+z = b₀ + b₁x₁ + b₂x₂ + … + bₘxₘ
+
+p = 1 / (1 + e^(−z))
+
+Because the inputs were standardized, each coefficient represents the change in log-odds associated with a one-standard-deviation increase in that feature, holding the other included features fixed.
+
+- Positive coefficient: increases the modelled log-odds of Malignant as that feature increases.
+- Negative coefficient: decreases the modelled log-odds, holding other features fixed.
+- `exp(coefficient)` is the associated odds ratio for a one-standard-deviation increase.
+
+These are conditional model associations, not proof of causality. Correlated features can make individual coefficients unstable or difficult to interpret.
+
+## 8. Evaluate the model
+
+```python
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    classification_report,
+    log_loss,
+    precision_score,
+    recall_score,
+    f1_score
+)
+
+print("Accuracy:", round(accuracy_score(y_test, y_pred), 4))
+print("Log Loss:", round(log_loss(y_test, p_malignant), 4))
+print("Confusion matrix:")
+print(confusion_matrix(y_test, y_pred, labels=[0, 1]))
+
+print("Precision (Malignant):", round(precision_score(y_test, y_pred), 4))
+print("Recall (Malignant):", round(recall_score(y_test, y_pred), 4))
+print("F1-score (Malignant):", round(f1_score(y_test, y_pred), 4))
+
+print(classification_report(
+    y_test,
+    y_pred,
+    labels=[0, 1],
+    target_names=["Benign (0)", "Malignant (1)"],
+    digits=4
+))
+```
+
+Metric definitions:
+- **Accuracy** = (TP + TN) / (TP + TN + FP + FN).
+- **Precision** = TP / (TP + FP): among predicted malignant cases, the fraction that are actually malignant.
+- **Recall** = TP / (TP + FN): among actual malignant cases, the fraction detected.
+- **F1-score** = 2 × Precision × Recall / (Precision + Recall).
+- **Log Loss** measures the quality of predicted probabilities; lower is better when comparing predictions on the same evaluation labels.
+
+For this label mapping, the confusion matrix rows are true labels and columns are predicted labels, with order [Benign, Malignant]:
+
+[[TN, FP], [FN, TP]]
+
+Accuracy alone is insufficient for some tasks. In particular, missing a positive case and producing a false alarm can have very different costs. Use metrics that reflect the task and select thresholds using validation data, not the final test set.
+
+## 9. Compare with our from-scratch implementation
+
+To make a meaningful comparison, use the same train/test split, the same training-only scaling rule, the same 0.5 classification threshold, and approximately the same objective.
+
+The scikit-learn model above uses L2 regularization by default. To approximate its objective with average Binary Cross-Entropy in a simple from-scratch implementation, we add this penalty to the average loss:
+
+J_regularized = average Log Loss + (1 / (2 × C × n)) × sum of squared non-intercept coefficients
+
+The corresponding gradient adds:
+
+gradient for each non-intercept coefficient += coefficient / (C × n)
+
+The intercept is not penalized in the implementation below. Solver details and implementation conventions can vary, so tiny numerical differences are expected.
+
+```python
+import numpy as np
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, log_loss, confusion_matrix
+
+
+def sigmoid(z):
+    z = np.clip(z, -500, 500)
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+def binary_log_loss(y_true, probabilities, epsilon=1e-15):
+    p = np.clip(probabilities, epsilon, 1 - epsilon)
+    return -np.mean(
+        y_true * np.log(p)
+        + (1 - y_true) * np.log(1 - p)
+    )
+
+
+# Load the data and explicitly make Malignant the positive class.
+data = load_breast_cancer()
+X = data.data
+y = (data.target == 0).astype(int)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# ----- A. scikit-learn model -----
+C = 1.0
+
+sk_model = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(C=C, max_iter=2000, solver="lbfgs")
+)
+sk_model.fit(X_train, y_train)
+
+sk_prob = sk_model.predict_proba(X_test)[:, 1]
+sk_pred = sk_model.predict(X_test)
+
+# ----- B. from-scratch batch Gradient Descent -----
+# Fit the scaler on training data only; transform test data with it.
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Add a column of ones for the intercept.
+X_train_aug = np.c_[np.ones(len(X_train_scaled)), X_train_scaled]
+X_test_aug = np.c_[np.ones(len(X_test_scaled)), X_test_scaled]
+
+theta = np.zeros(X_train_aug.shape[1])
+learning_rate = 0.1
+epochs = 30000
+n = len(y_train)
+
+# Approximate matching regularization for average loss.
+l2_strength = 1.0 / (C * n)
+
+initial_train_loss = binary_log_loss(
+    y_train, sigmoid(X_train_aug @ theta)
+)
+
+for epoch in range(epochs):
+    p = sigmoid(X_train_aug @ theta)
+
+    # Gradient of average Log Loss
+    gradient = (X_train_aug.T @ (p - y_train)) / n
+
+    # Add L2 gradient to coefficients, but not to the intercept.
+    gradient[1:] += l2_strength * theta[1:]
+
+    theta -= learning_rate * gradient
+
+scratch_prob = sigmoid(X_test_aug @ theta)
+scratch_pred = (scratch_prob >= 0.5).astype(int)
+
+print("Initial scratch train Log Loss:", round(initial_train_loss, 4))
+print("\n--- scikit-learn ---")
+print("Accuracy:", round(accuracy_score(y_test, sk_pred), 4))
+print("Log Loss:", round(log_loss(y_test, sk_prob), 4))
+print("Confusion matrix:\n", confusion_matrix(y_test, sk_pred, labels=[0, 1]))
+
+print("\n--- From scratch ---")
+print("Accuracy:", round(accuracy_score(y_test, scratch_pred), 4))
+print("Log Loss:", round(binary_log_loss(y_test, scratch_prob), 4))
+print("Confusion matrix:\n", confusion_matrix(y_test, scratch_pred, labels=[0, 1]))
+
+print("\nMaximum absolute coefficient difference:")
+print(round(np.max(np.abs(
+    sk_model.named_steps["logisticregression"].coef_[0] - theta[1:]
+)), 4))
+```
+
+Expected results (small variations can occur across scikit-learn versions and solver implementations):
+
+| Metric | scikit-learn | From scratch |
+|---|---:|---:|
+| Accuracy | 0.9649 | 0.9649 |
+| Log Loss | 0.0773 | 0.0772 |
+| Confusion matrix | [[71, 1], [3, 39]] | [[71, 1], [3, 39]] |
+
+In this split, both models make the same class predictions. The tiny difference in Log Loss is expected because one uses scikit-learn's numerical solver and the other uses a fixed number of Gradient Descent updates.
+
+Do not expect every dataset or run to produce identical coefficients or metrics. The comparison depends on preprocessing, regularization, the optimization method, the stopping criterion, and the data split.
+
+## 10. Common mistakes to avoid
+
+- **Data leakage:** never fit a scaler on the entire dataset before splitting. Use a Pipeline or fit preprocessing on training data only.
+- **Wrong probability column:** confirm class order with `classes_` before choosing a `predict_proba()` column.
+- **Comparing accuracy alone:** inspect Log Loss and class-specific precision/recall where relevant.
+- **Ignoring convergence:** check warnings and increase `max_iter` or revisit scaling if the solver has not converged.
+- **Reading coefficient signs as causality:** coefficients show modelled conditional associations, not causal effects.
+- **Tuning on test data:** use validation data for hyperparameters or threshold selection; keep the test set for final evaluation.
+
+## Key takeaways
+
+- `fit()` learns coefficients from the training data.
+- `predict()` returns class labels, while `predict_proba()` returns class probabilities.
+- A Pipeline helps prevent preprocessing leakage by fitting transforms only on training data.
+- Standardization can improve optimization and makes coefficient scales easier to compare.
+- Coefficients in this lesson correspond to standardized features.
+- Accuracy, confusion matrix, precision, recall, F1-score, and Log Loss provide complementary information.
+- A from-scratch Gradient Descent implementation helps explain the mechanics; scikit-learn is more convenient and robust for normal workflows.
+
+**Next:** Lesson 10 — Classification evaluation metrics in depth, including confusion matrix, precision, recall, F1, specificity, ROC curves, and ROC-AUC.
+
 ## Progress tracker
 
 - [x] Lesson 1 — Classification fundamentals
@@ -1315,7 +1664,7 @@ Gradient Descent is an optimizer, not a guarantee of generalization. Always eval
 - [x] Lesson 6 — Log Loss / cost function
 - [x] Lesson 7 — Maximum Likelihood Estimation
 - [x] Lesson 8 — Gradient Descent and coefficient learning
-- [ ] Lesson 9 — scikit-learn implementation
+- [x] Lesson 9 — scikit-learn implementation
 - [ ] Lesson 10 — Evaluation metrics
 - [ ] Lesson 11 — Multiclass Logistic Regression
 - [ ] Lesson 12 — L1/L2 regularization
