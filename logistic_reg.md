@@ -1320,6 +1320,60 @@ Do not try to memorize the entire lesson at once. Learn the pipeline in this ord
 5. **Predict:** `model.predict(X_test)` returns class labels; `model.predict_proba(X_test)` returns probabilities for each class.
 6. **Evaluate:** compare predictions with the actual test labels using appropriate metrics.
 
+### Step 3: Feature scaling without data leakage
+
+Features can use very different scales. For example, study hours might range from 1 to 8, while attendance might range from 60 to 95. Standardization helps many optimization algorithms work more reliably.
+
+For each feature, StandardScaler uses the training-set mean and standard deviation:
+
+scaled value = (value − training mean) / training standard deviation
+
+After standardization, each training feature has a mean close to 0 and a standard deviation close to 1. This does not mean the feature has become normally distributed.
+
+**Important:** split first, then fit the scaler on training data only. Use the already-fitted scaler to transform test data. Do not call `fit_transform()` on the test set, because that lets test-set statistics influence preprocessing.
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+X = np.array([
+    [1, 60],
+    [2, 65],
+    [3, 70],
+    [4, 75],
+    [5, 85],
+    [6, 90],
+    [7, 92],
+    [8, 95]
+], dtype=float)
+
+y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)
+
+scaler = StandardScaler()
+
+# Learn mean/std only from training rows
+X_train_scaled = scaler.fit_transform(X_train)
+
+# Reuse those training mean/std values for test rows
+X_test_scaled = scaler.transform(X_test)
+
+print("Training shape:", X_train_scaled.shape)
+print("Test shape:", X_test_scaled.shape)
+print("Training feature means:", X_train_scaled.mean(axis=0).round(4))
+print("Training feature stds:", X_train_scaled.std(axis=0).round(4))
+```
+
+Why this matters:
+- `fit_transform(X_train)` learns the scaling statistics from training data and transforms it.
+- `transform(X_test)` uses those saved statistics without learning anything from test data.
+- Scaling can help Logistic Regression's optimization and makes coefficient magnitudes easier to compare across features.
+- A `Pipeline(StandardScaler(), LogisticRegression())` automates this correctly when it is fitted on training data.
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
