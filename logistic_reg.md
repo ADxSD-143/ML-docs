@@ -2120,6 +2120,74 @@ FNR is undefined if there are no actual positive examples (FN + TP = 0). The cod
 
 ---
 
+### Step 14: ROC Curve
+
+A **Receiver Operating Characteristic (ROC) curve** shows how a binary classifier's results change when we vary its probability threshold.
+
+- The x-axis is the **False Positive Rate (FPR)**.
+- The y-axis is the **True Positive Rate (TPR)**, which is the same as Recall for the positive class.
+
+Instead of judging the model at only one threshold, the ROC curve shows its behaviour across many thresholds.
+
+#### A small numerical example
+
+Suppose the true labels and predicted probabilities are:
+
+| Example | Actual label | Predicted probability for class 1 |
+|---:|---:|---:|
+| 1 | 0 | 0.10 |
+| 2 | 0 | 0.40 |
+| 3 | 0 | 0.55 |
+| 4 | 1 | 0.80 |
+| 5 | 1 | 0.45 |
+| 6 | 1 | 0.90 |
+
+At threshold 0.50, probabilities greater than or equal to 0.50 are predicted as class 1. The predictions are:
+
+```text
+y_true = [0, 0, 0, 1, 1, 1]
+y_pred = [0, 0, 1, 1, 0, 1]
+```
+
+From the confusion matrix, TN = 2, FP = 1, FN = 1, and TP = 2.
+
+```text
+FPR = FP / (FP + TN) = 1 / (1 + 2) = 0.333
+TPR = TP / (TP + FN) = 2 / (2 + 1) = 0.667
+```
+
+So the ROC curve includes the point approximately **(0.333, 0.667)** at this threshold. Other thresholds produce other points, which are joined to form the curve.
+
+#### Python code
+
+```python
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
+
+y_true = [0, 0, 0, 1, 1, 1]
+y_scores = [0.10, 0.40, 0.55, 0.80, 0.45, 0.90]
+
+# Calculate ROC points across possible probability thresholds
+fpr, tpr, thresholds = roc_curve(y_true, y_scores)
+
+plt.plot(fpr, tpr, marker="o", label="Logistic Regression")
+plt.plot([0, 1], [0, 1], linestyle="--", label="Random-classifier reference")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate (Recall)")
+plt.title("ROC Curve")
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+The dashed diagonal is a reference line for random ranking. Curves that move closer to the top-left corner generally indicate better separation between the two classes. The curve depends on the model's predicted probabilities or scores, not just its final class labels.
+
+**For this step, focus only on what a ROC curve shows and how to plot it.** We will treat ROC-AUC as a separate concept.
+
+**Checkpoint:** On an ROC curve, which quantity is shown on the y-axis: FPR or TPR?
+
+---
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
