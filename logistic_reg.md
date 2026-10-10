@@ -1374,6 +1374,104 @@ Why this matters:
 - Scaling can help Logistic Regression's optimization and makes coefficient magnitudes easier to compare across features.
 - A `Pipeline(StandardScaler(), LogisticRegression())` automates this correctly when it is fitted on training data.
 
+### Step 4: Create and train the model with a Pipeline
+
+Now we have:
+- `X_train`: the input features used for learning.
+- `y_train`: the correct labels used for learning.
+- `X_test` and `y_test`: held aside for later evaluation.
+
+We will combine scaling and Logistic Regression into one `Pipeline`. This is safer than manually scaling the whole dataset because the Pipeline learns preprocessing only when fitted on the training split.
+
+```python
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
+
+# Two input features: study hours and attendance
+X = np.array([
+    [1, 60],
+    [2, 65],
+    [3, 70],
+    [4, 75],
+    [5, 85],
+    [6, 90],
+    [7, 92],
+    [8, 95]
+], dtype=float)
+
+# 0 = Fail, 1 = Pass
+y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+
+# Keep the same split as Step 3
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.25,
+    random_state=42,
+    stratify=y
+)
+
+# Build a pipeline: first scale, then classify
+model = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(C=1.0, max_iter=1000, solver="lbfgs")
+)
+
+# Learn from training data
+model.fit(X_train, y_train)
+
+# Inspect the fitted Logistic Regression step
+classifier = model.named_steps["logisticregression"]
+
+print("Training rows:", len(X_train))
+print("Test rows:", len(X_test))
+print("Learned intercept:", np.round(classifier.intercept_, 3))
+print("Learned coefficients:", np.round(classifier.coef_, 3))
+```
+
+Expected output (rounded):
+
+```text
+Training rows: 6
+Test rows: 2
+Learned intercept: [-0.031]
+Learned coefficients: [[0.732 0.892]]
+```
+
+The exact coefficients depend on the training data, split, preprocessing, and model settings. With the code and split above, these are the expected rounded values.
+
+#### What does each line mean?
+
+- `make_pipeline(...)` connects preprocessing and model training into one object.
+- `StandardScaler()` learns the training features' means and standard deviations and standardizes those features.
+- `LogisticRegression(...)` creates the classifier; it has not learned coefficients until `fit()` runs.
+- `model.fit(X_train, y_train)` fits the scaler on `X_train`, transforms those training features, then learns the Logistic Regression coefficients and intercept from the transformed features and `y_train`.
+- `model.named_steps["logisticregression"]` lets us inspect the fitted classifier inside the Pipeline.
+- `coef_` contains learned feature coefficients; `intercept_` contains the learned intercept.
+
+#### What did `fit()` learn?
+
+The fitted Logistic Regression model calculates a score from the **standardized** inputs:
+
+z = b₀ + b₁ × standardized study hours + b₂ × standardized attendance
+
+It then turns that score into a probability:
+
+p = 1 / (1 + e^(−z))
+
+During training, the optimizer adjusts the coefficients and intercept to reduce the objective (Log Loss with regularization, under these settings).
+
+The two coefficients above correspond to the standardized features, in this order:
+1. Study hours
+2. Attendance
+
+They are not coefficients for the original unscaled numbers. A positive coefficient means that increasing that standardized feature increases the modelled log-odds of class 1, holding the other feature fixed. It does not prove causation.
+
+**For this step, focus only on `model.fit(X_train, y_train)`: it is the point where the Pipeline learns from the training examples. We will use `predict()` and `predict_proba()` in the next step.**
+
 ### A tiny example before the real dataset
 
 Imagine this toy dataset:
