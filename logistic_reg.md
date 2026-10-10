@@ -1309,6 +1309,33 @@ Gradient Descent is an optimizer, not a guarantee of generalization. Always eval
 
 # Lesson 9: scikit-learn Logistic Regression — Training and Evaluation
 
+## Start here: Lesson 9 in simple language
+
+Do not try to memorize the entire lesson at once. Learn the pipeline in this order:
+
+1. **Prepare the data:** `X` contains the information given to the model (features); `y` contains the correct answer (target).
+2. **Split the data:** training data is used to learn; test data is kept aside to check performance on unseen examples.
+3. **Scale features if needed:** learn the scaling numbers from training data only, then apply the same transformation to the test data.
+4. **Create and train the model:** `model.fit(X_train, y_train)` learns the coefficients from the training examples.
+5. **Predict:** `model.predict(X_test)` returns class labels; `model.predict_proba(X_test)` returns probabilities for each class.
+6. **Evaluate:** compare predictions with the actual test labels using appropriate metrics.
+
+### A tiny example before the real dataset
+
+Imagine this toy dataset:
+
+| Study hours | Pass result |
+|---:|---:|
+| 1 | 0 |
+| 2 | 0 |
+| 5 | 1 |
+| 6 | 1 |
+
+Here, `X` is the Study hours column and `y` is the Pass result column. The model learns from examples where the answer is already known, then we check whether it predicts unseen examples well.
+
+This toy dataset is only for understanding the workflow. Later code in this lesson uses a larger built-in dataset so evaluation is more meaningful.
+
+
 ## 1. Why use scikit-learn?
 
 In Lesson 8, we implemented Logistic Regression training with NumPy and Gradient Descent. In practice, scikit-learn provides a tested implementation with efficient solvers, regularization, prediction methods, and a consistent API.
